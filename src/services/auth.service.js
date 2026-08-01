@@ -11,22 +11,18 @@ const { AppError } = require("../utils/app-error");
 const DUMMY_HASH =
   "$2b$12$VJJmVJIZB2lU..INDr.vc..YrHcO79xmejJa5Ck3MioGxBdeQZlhS";
 
-/** Email luôn lưu ở dạng chữ thường để so sánh và kiểm tra trùng nhất quán. */
-function normalizeEmail(email) {
-  return String(email).trim().toLowerCase();
-}
-
 async function register({ fullName, email, password }) {
-  const normalizedEmail = normalizeEmail(email);
-
-  if (userRepository.findByEmail(normalizedEmail)) {
+  // Không tự chuẩn hóa email ở đây: repository đã làm việc đó cho cả lúc tra
+  // cứu lẫn lúc ghi, nên chỉ có đúng một nơi định nghĩa "email hợp lệ trông
+  // như thế nào".
+  if (userRepository.findByEmail(email)) {
     throw new AppError("Email đã được sử dụng", 409, "EMAIL_TAKEN");
   }
 
   const passwordHash = await bcrypt.hash(password, env.bcryptRounds);
   return userRepository.create({
     fullName: String(fullName).trim(),
-    email: normalizedEmail,
+    email,
     passwordHash,
   });
 }
@@ -37,7 +33,7 @@ async function register({ fullName, email, password }) {
  * một email có đăng ký hay chưa.
  */
 async function verifyCredentials(email, password) {
-  const user = userRepository.findByEmail(normalizeEmail(email));
+  const user = userRepository.findByEmail(email);
   if (!user) {
     await bcrypt.compare(String(password), DUMMY_HASH);
     return null;
@@ -49,4 +45,4 @@ async function verifyCredentials(email, password) {
   return { id: user.id, email: user.email, fullName: user.full_name };
 }
 
-module.exports = { register, verifyCredentials, normalizeEmail };
+module.exports = { register, verifyCredentials };

@@ -4,3 +4,6 @@ data/
 *.log
 coverage/
 .DS_Store
+
+# Tài liệu ôn vấn đáp — ghi chú cá nhân, không công khai
+docs/vandap.md
