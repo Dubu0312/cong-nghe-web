@@ -193,6 +193,11 @@ desktop, nút cao tối thiểu 40px, và không có lỗi JavaScript nào trong
 
 ## Bảng mã trạng thái HTTP
 
+Tham chiếu đầy đủ 13 endpoint, tham số đầu vào và mọi mã trạng thái:
+[docs/api.md](./docs/api.md). Bảng đó được kiểm chứng bằng 50 request thật qua
+`tests/e2e/verify-status.sh`.
+
+
 | Mã | Trường hợp |
 |---|---|
 | 200 | Render trang thành công |
