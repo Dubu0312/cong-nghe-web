@@ -1,0 +1,28 @@
+<%- include("partials/header", { pageTitle: "Trang chủ" }) %>
+
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <div class="card shadow-sm">
+      <div class="card-body p-4 p-md-5">
+        <h1 class="h3 mb-3">Ghi chú cá nhân, gọn và riêng tư</h1>
+        <p class="text-secondary">
+          Tạo, tìm kiếm và sắp xếp ghi chú của riêng bạn. Mỗi tài khoản chỉ nhìn
+          thấy dữ liệu của chính mình.
+        </p>
+
+        <ul class="text-secondary">
+          <li>Phân loại theo 5 danh mục, lọc và sắp xếp nhanh.</li>
+          <li>Tìm kiếm không dấu vẫn ra kết quả có dấu.</li>
+          <li>Ghim những ghi chú quan trọng lên đầu danh sách.</li>
+        </ul>
+
+        <div class="d-flex flex-column flex-sm-row gap-2 mt-4">
+          <a href="/auth/register" class="btn btn-primary">Đăng ký</a>
+          <a href="/auth/login" class="btn btn-outline-secondary">Đăng nhập</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include("partials/footer") %>

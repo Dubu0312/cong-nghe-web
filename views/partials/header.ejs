@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title><%= typeof pageTitle !== "undefined" ? pageTitle + " · " : "" %>Ghi chú của tôi</title>
+    <!-- Bootstrap tự host trong public/vendor: Helmet bật CSP default-src 'self'
+         nên file tải từ CDN sẽ bị trình duyệt chặn. -->
+    <link rel="stylesheet" href="/vendor/bootstrap.min.css" />
+    <link rel="stylesheet" href="/css/app.css" />
+  </head>
+  <body class="d-flex flex-column min-vh-100 bg-body-tertiary">
+    <%- include("navbar") %>
+    <main class="container py-4 flex-grow-1">
+      <%- include("flash") %>

@@ -1,0 +1,96 @@
+<%
+  const isEdit = mode === "edit";
+  const action = isEdit ? `/notes/${note.id}` : "/notes";
+%>
+<%- include("../partials/header", { pageTitle: isEdit ? "Sửa ghi chú" : "Tạo ghi chú" }) %>
+
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="card shadow-sm">
+      <div class="card-body p-4">
+        <h1 class="h4 mb-4"><%= isEdit ? "Sửa ghi chú" : "Tạo ghi chú" %></h1>
+
+        <form method="post" action="<%= action %>" novalidate>
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+
+          <div class="mb-3">
+            <label for="title" class="form-label">Tiêu đề</label>
+            <input
+              type="text"
+              class="form-control <%= errors.title ? 'is-invalid' : '' %>"
+              id="title"
+              name="title"
+              value="<%= values.title || '' %>"
+              maxlength="150"
+              required
+            />
+            <% if (errors.title) { %>
+              <div class="invalid-feedback"><%= errors.title %></div>
+            <% } %>
+          </div>
+
+          <div class="mb-3">
+            <label for="content" class="form-label">Nội dung</label>
+            <textarea
+              class="form-control <%= errors.content ? 'is-invalid' : '' %>"
+              id="content"
+              name="content"
+              rows="10"
+              maxlength="10000"
+              data-counter="content-counter"
+              required
+            ><%= values.content || "" %></textarea>
+            <div class="form-text">
+              <span id="content-counter">0</span>/10.000 ký tự
+            </div>
+            <% if (errors.content) { %>
+              <div class="invalid-feedback"><%= errors.content %></div>
+            <% } %>
+          </div>
+
+          <div class="mb-3">
+            <label for="category" class="form-label">Danh mục</label>
+            <select
+              class="form-select <%= errors.category ? 'is-invalid' : '' %>"
+              id="category"
+              name="category"
+              required
+            >
+              <% categories.forEach(function (item) { %>
+                <option value="<%= item.value %>" <%= values.category === item.value ? "selected" : "" %>>
+                  <%= item.label %>
+                </option>
+              <% }); %>
+            </select>
+            <% if (errors.category) { %>
+              <div class="invalid-feedback"><%= errors.category %></div>
+            <% } %>
+          </div>
+
+          <div class="form-check mb-4">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              value="1"
+              id="is_pinned"
+              name="is_pinned"
+              <%= values.is_pinned ? "checked" : "" %>
+            />
+            <label class="form-check-label" for="is_pinned">
+              Ghim ghi chú này lên đầu danh sách
+            </label>
+          </div>
+
+          <div class="d-flex flex-wrap gap-2">
+            <button type="submit" class="btn btn-primary">Lưu</button>
+            <a href="<%= isEdit ? `/notes/${note.id}` : '/notes' %>" class="btn btn-outline-secondary">
+              Hủy
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include("../partials/footer") %>

@@ -1,0 +1,47 @@
+<%- include("../partials/header", { pageTitle: note.title }) %>
+
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="card shadow-sm">
+      <div class="card-body p-4">
+        <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+          <h1 class="h4 mb-0"><%= note.title %></h1>
+          <% if (note.is_pinned) { %>
+            <span class="badge text-bg-warning flex-shrink-0">Ghim</span>
+          <% } %>
+        </div>
+
+        <div class="mb-3">
+          <span class="badge text-bg-light border"><%= categoryLabels[note.category] %></span>
+        </div>
+
+        <!-- Dùng <%%= %> để escape: nội dung do người dùng nhập, không bao giờ
+             render thô bằng <%%- %> vì sẽ mở đường cho XSS.
+             Xuống dòng giữ được nhờ CSS white-space: pre-wrap. -->
+        <div class="note-content mb-4"><%= note.content %></div>
+
+        <dl class="row small text-secondary mb-4">
+          <dt class="col-sm-3">Tạo lúc</dt>
+          <dd class="col-sm-9"><%= formatDateTime(note.created_at) %></dd>
+          <dt class="col-sm-3">Cập nhật</dt>
+          <dd class="col-sm-9"><%= formatDateTime(note.updated_at) %></dd>
+        </dl>
+
+        <div class="d-flex flex-wrap gap-2">
+          <a href="/notes/<%= note.id %>/edit" class="btn btn-primary">Sửa</a>
+          <form
+            method="post"
+            action="/notes/<%= note.id %>/delete"
+            data-confirm="Xóa ghi chú “<%= note.title %>”?"
+          >
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+            <button type="submit" class="btn btn-outline-danger">Xóa</button>
+          </form>
+          <a href="/notes" class="btn btn-outline-secondary">Quay lại</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include("../partials/footer") %>

@@ -1,0 +1,37 @@
+/* CSS bổ sung, cố tình để ít: phần lớn giao diện dùng thẳng Bootstrap. */
+
+/* Giữ nguyên xuống dòng của nội dung ghi chú mà không cần render HTML thô,
+   nhờ vậy vẫn escape được nội dung người dùng nhập. */
+.note-content {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Tiêu đề dài trên card không được phá vỡ khung. */
+.card h2 a {
+  color: inherit;
+  word-break: break-word;
+}
+
+.card h2 a:hover {
+  text-decoration: underline !important;
+}
+
+/* Vùng chạm tối thiểu ~40px trên mobile để bấm không bị trượt. */
+@media (max-width: 767.98px) {
+  .btn-sm {
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+  }
+}
+
+/* Focus ring rõ ràng, phục vụ điều hướng bằng bàn phím. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid #0d6efd33;
+  outline-offset: 2px;
+}

@@ -1,0 +1,14 @@
+<%- include("../partials/header", { pageTitle: "Không tìm thấy" }) %>
+
+<div class="text-center py-5">
+  <p class="display-6 mb-2">404</p>
+  <h1 class="h4">Không tìm thấy nội dung</h1>
+  <p class="text-secondary">
+    Trang hoặc ghi chú bạn tìm không tồn tại, hoặc không thuộc về tài khoản này.
+  </p>
+  <a href="<%= currentUser ? '/notes' : '/' %>" class="btn btn-primary mt-2">
+    <%= currentUser ? "Về danh sách ghi chú" : "Về trang chủ" %>
+  </a>
+</div>
+
+<%- include("../partials/footer") %>

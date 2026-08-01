@@ -1,0 +1,50 @@
+<nav class="navbar navbar-expand-md bg-white border-bottom">
+  <div class="container">
+    <a class="navbar-brand fw-semibold" href="<%= currentUser ? '/notes' : '/' %>">
+      Ghi chú của tôi
+    </a>
+
+    <button
+      class="navbar-toggler"
+      type="button"
+      data-bs-toggle="collapse"
+      data-bs-target="#mainNav"
+      aria-controls="mainNav"
+      aria-expanded="false"
+      aria-label="Mở menu"
+    >
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="mainNav">
+      <% if (currentUser) { %>
+        <ul class="navbar-nav me-auto">
+          <li class="nav-item">
+            <a class="nav-link <%= currentPath.startsWith('/notes') ? 'active' : '' %>" href="/notes">
+              Ghi chú
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/notes/new">Tạo ghi chú</a>
+          </li>
+        </ul>
+
+        <div class="d-flex flex-column flex-md-row align-items-md-center gap-2 py-2 py-md-0">
+          <span class="text-secondary small"><%= currentUser.displayName %></span>
+          <!-- Đăng xuất là thao tác đổi trạng thái nên phải là form POST, không dùng thẻ <a>. -->
+          <form method="post" action="/auth/logout" class="d-inline">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+            <button type="submit" class="btn btn-outline-secondary btn-sm w-100">
+              Đăng xuất
+            </button>
+          </form>
+        </div>
+      <% } else { %>
+        <div class="ms-auto d-flex flex-column flex-md-row gap-2 py-2 py-md-0">
+          <a class="btn btn-outline-secondary btn-sm" href="/auth/login">Đăng nhập</a>
+          <a class="btn btn-primary btn-sm" href="/auth/register">Đăng ký</a>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</nav>

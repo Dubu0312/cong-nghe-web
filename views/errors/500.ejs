@@ -1,0 +1,12 @@
+<%- include("../partials/header", { pageTitle: "Lỗi hệ thống" }) %>
+
+<div class="text-center py-5">
+  <p class="display-6 mb-2">500</p>
+  <h1 class="h4">Đã có lỗi xảy ra, vui lòng thử lại</h1>
+  <p class="text-secondary">
+    Sự cố đã được ghi lại ở phía máy chủ. Bạn có thể tải lại trang sau ít phút.
+  </p>
+  <a href="<%= currentUser ? '/notes' : '/' %>" class="btn btn-primary mt-2">Quay lại</a>
+</div>
+
+<%- include("../partials/footer") %>
