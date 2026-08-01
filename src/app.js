@@ -29,7 +29,21 @@ app.set("views", path.join(__dirname, "..", "views"));
 
 // Helmet giữ nguyên CSP mặc định (default-src 'self'). Bootstrap được tự host
 // trong public/vendor nên không cần nới lỏng chính sách này.
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      useDefaults: true,
+      directives: {
+        // upgrade-insecure-requests buộc trình duyệt nâng mọi request con từ
+        // HTTP sang HTTPS. Trình duyệt miễn trừ localhost, nhưng khi mở app
+        // qua IP trong mạng LAN (ví dụ kiểm tra trên điện thoại) thì không —
+        // CSS và JS sẽ bị chặn sạch mà không báo lỗi gì trên trang.
+        // Production chạy sau HTTPS thật nên vẫn bật chỉ thị này.
+        upgradeInsecureRequests: env.isProduction ? [] : null,
+      },
+    },
+  })
+);
 
 if (!env.isTest) {
   app.use(morgan(env.isProduction ? "combined" : "dev"));

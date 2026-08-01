@@ -70,6 +70,11 @@ async function noHorizontalOverflow(page) {
     // tình tạo ra 422 (validation) và 404 (ghi chú không tồn tại), đó là hành vi
     // đúng chứ không phải lỗi JavaScript, nên bỏ qua nhóm này.
     if (msg.text().startsWith("Failed to load resource")) return;
+    // Khi mở app qua IP trong LAN bằng HTTP, Chromium báo là đã bỏ qua header
+    // Cross-Origin-Opener-Policy vì origin không được coi là đáng tin. Header
+    // chỉ bị ignore, không có gì hỏng, và trên bản deploy dùng HTTPS thì header
+    // có hiệu lực bình thường.
+    if (msg.text().includes("Cross-Origin-Opener-Policy header has been ignored")) return;
     consoleErrors.push(msg.text());
   });
   page.on("requestfailed", (req) => failedRequests.push(`${req.url()} — ${req.failure()?.errorText}`));

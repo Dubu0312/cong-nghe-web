@@ -18,6 +18,11 @@ module.exports = {
   isTest,
   isProduction,
   port: Number.parseInt(process.env.PORT, 10) || 3000,
+
+  // 0.0.0.0 nghĩa là nghe trên mọi network interface, nhờ vậy máy khác trong
+  // cùng mạng truy cập được — tiện khi kiểm tra giao diện trên điện thoại.
+  // Đặt HOST=127.0.0.1 nếu chỉ muốn mở cho chính máy này.
+  host: process.env.HOST || "0.0.0.0",
   sessionSecret: process.env.SESSION_SECRET || "dev-secret-khong-dung-cho-production",
   databasePath,
   // Hạ số vòng bcrypt khi chạy test cho nhanh. Đây chỉ là đánh đổi tốc độ khi

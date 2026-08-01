@@ -123,12 +123,27 @@ npm run db:init    # tạo bảng
 npm run db:seed    # tạo tài khoản demo và dữ liệu mẫu
 ```
 
+### Truy cập từ máy khác trong mạng
+
+Server nghe trên `0.0.0.0` nên các thiết bị cùng mạng vào được — tiện khi kiểm
+tra giao diện trên điện thoại thật. Lúc khởi động, server in ra sẵn danh sách
+URL vào được:
+
+```
+Server đang chạy trên 0.0.0.0:3000
+  http://localhost:3000
+  http://192.168.1.20:3000
+```
+
+Muốn đóng lại chỉ cho riêng máy mình thì đặt `HOST=127.0.0.1` trong `.env`.
+
 ## Biến môi trường
 
 | Biến | Mặc định | Ý nghĩa |
 |---|---|---|
 | `NODE_ENV` | `development` | `production` sẽ bật cookie secure và trust proxy |
 | `PORT` | `3000` | Cổng server |
+| `HOST` | `0.0.0.0` | Nghe trên mọi interface. Đặt `127.0.0.1` để chỉ mở cho máy này |
 | `SESSION_SECRET` | — | **Bắt buộc ở production.** Chuỗi ngẫu nhiên dài |
 | `DATABASE_PATH` | `./data/app.db` | Vị trí file SQLite |
 | `BCRYPT_ROUNDS` | `12` | Số vòng hash |

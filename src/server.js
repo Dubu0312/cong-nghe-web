@@ -1,5 +1,6 @@
 "use strict";
 
+const os = require("node:os");
 const app = require("./app");
 const env = require("./config/env");
 const { initDatabase } = require("./database/init");
@@ -21,9 +22,29 @@ async function start() {
     console.log(`Đã tạo tài khoản demo: ${env.demoEmail}`);
   }
 
-  app.listen(env.port, () => {
-    console.log(`Server đang chạy tại http://localhost:${env.port}`);
+  app.listen(env.port, env.host, () => {
+    console.log(`Server đang chạy trên ${env.host}:${env.port}`);
+    for (const url of reachableUrls()) {
+      console.log(`  ${url}`);
+    }
   });
+}
+
+/** Liệt kê các URL vào được, để khỏi phải tự tra IP khi test trên điện thoại. */
+function reachableUrls() {
+  const urls = [`http://localhost:${env.port}`];
+
+  // Chỉ liệt kê IP khác khi thực sự nghe trên mọi interface.
+  if (env.host !== "0.0.0.0") return urls;
+
+  for (const addresses of Object.values(os.networkInterfaces())) {
+    for (const address of addresses || []) {
+      if (address.family === "IPv4" && !address.internal) {
+        urls.push(`http://${address.address}:${env.port}`);
+      }
+    }
+  }
+  return urls;
 }
 
 start().catch((error) => {
