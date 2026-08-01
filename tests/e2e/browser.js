@@ -97,7 +97,11 @@ async function noHorizontalOverflow(page) {
   check("Bootstrap được áp dụng (nút có màu nền)", styles.btnBg !== "rgba(0, 0, 0, 0)", styles.btnBg);
   check("Bootstrap được áp dụng (bo góc)", styles.btnRadius !== "0px", styles.btnRadius);
   check("font hệ thống của Bootstrap", styles.bodyFont.includes("system-ui"));
-  check("hiển thị thông tin tài khoản demo", await page.getByText(DEMO_USER).isVisible());
+  // Chỉ xét hộp thông tin tài khoản demo; mã học viên còn xuất hiện ở footer.
+  check(
+    "hiển thị thông tin tài khoản demo",
+    await page.locator(".alert", { hasText: "Tài khoản demo" }).getByText(DEMO_USER).isVisible()
+  );
   await shot(page, "01-dang-nhap");
 
   console.log("== Đăng nhập");
