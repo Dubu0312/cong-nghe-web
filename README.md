@@ -12,12 +12,15 @@ mục, sắp xếp và phân trang.
 
 ## Tài khoản demo
 
-| Tài khoản | Mật khẩu |
-|---|---|
-| `20242507M` | `12345678` |
+| Tài khoản | Mật khẩu | Dữ liệu |
+|---|---|---|
+| `20242507M` | `12345678` | 6 ghi chú |
+| `user_test` | `12345678` | 5 ghi chú khác hoàn toàn |
 
-Tài khoản này được seed tự động khi server khởi động, kèm 6 ghi chú mẫu thuộc
-nhiều danh mục khác nhau.
+Cả hai được seed tự động khi server khởi động. Tài khoản thứ hai tồn tại để
+**kiểm chứng phân quyền dữ liệu ngay trên giao diện**: đăng nhập lần lượt bằng
+hai tài khoản sẽ thấy hai danh sách hoàn toàn tách biệt, và nếu sao chép URL một
+ghi chú rồi mở bằng tài khoản còn lại thì nhận trang 404.
 
 Ô đăng nhập nhận cả email lẫn mã học viên: người dùng tự đăng ký qua form thì
 dùng email (có kiểm tra định dạng), còn tài khoản demo trên được tạo bằng seed
@@ -149,6 +152,8 @@ Muốn đóng lại chỉ cho riêng máy mình thì đặt `HOST=127.0.0.1` tro
 | `BCRYPT_ROUNDS` | `12` | Số vòng hash |
 | `DEMO_EMAIL` | `20242507M` | Tài khoản demo (email hoặc mã học viên) |
 | `DEMO_PASSWORD` | `12345678` | Mật khẩu tài khoản demo |
+| `DEMO2_EMAIL` | `user_test` | Tài khoản thứ hai để minh họa phân quyền |
+| `DEMO2_PASSWORD` | `12345678` | Mật khẩu tài khoản thứ hai |
 
 Sinh `SESSION_SECRET`:
 

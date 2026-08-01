@@ -1065,8 +1065,14 @@ Chi phí là khoảng 60 dòng code trong `src/config/session-store.js` — đ�
 
 ## 17.1. Tài khoản demo
 
-- Tài khoản: `20242507M`
-- Mật khẩu: `12345678`
+Seed tạo **hai** tài khoản, không phải một:
+
+| Tài khoản | Mật khẩu | Dữ liệu |
+|---|---|---|
+| `20242507M` | `12345678` | 6 ghi chú |
+| `user_test` | `12345678` | 5 ghi chú khác hoàn toàn |
+
+Tài khoản thứ hai không phải để dự phòng mà là một phần của phần trình bày: có hai người dùng với hai bộ dữ liệu riêng thì mới kiểm chứng được ngay trên giao diện rằng mỗi người chỉ truy cập được dữ liệu của chính mình.
 
 Ô đăng nhập nhận cả email lẫn mã học viên. Đăng ký qua form vẫn bắt buộc email đúng định dạng; tài khoản demo được tạo bằng seed nên dùng thẳng mã học viên.
 

@@ -30,4 +30,10 @@ module.exports = {
   bcryptRounds: isTest ? 4 : Number.parseInt(process.env.BCRYPT_ROUNDS, 10) || 12,
   demoEmail: process.env.DEMO_EMAIL || "20242507M",
   demoPassword: process.env.DEMO_PASSWORD || "12345678",
+
+  // Tài khoản thứ hai, tồn tại để minh họa mỗi người chỉ thấy dữ liệu của
+  // chính mình: đăng nhập bằng tài khoản này sẽ không thấy ghi chú nào của
+  // tài khoản trên, và mở URL ghi chú của nhau đều nhận 404.
+  demo2Email: process.env.DEMO2_EMAIL || "user_test",
+  demo2Password: process.env.DEMO2_PASSWORD || "12345678",
 };

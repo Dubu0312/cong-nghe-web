@@ -17,10 +17,9 @@ const { seedDemoData } = require("./database/seed");
 async function start() {
   initDatabase();
 
-  const result = await seedDemoData();
-  if (result.created) {
-    console.log(`Đã tạo tài khoản demo: ${env.demoEmail}`);
-  }
+  const { accounts } = await seedDemoData();
+  if (accounts.primary.created) console.log(`Đã tạo tài khoản demo: ${env.demoEmail}`);
+  if (accounts.second.created) console.log(`Đã tạo tài khoản demo: ${env.demo2Email}`);
 
   app.listen(env.port, env.host, () => {
     console.log(`Server đang chạy trên ${env.host}:${env.port}`);

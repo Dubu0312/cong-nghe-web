@@ -63,25 +63,71 @@ const DEMO_NOTES = [
   },
 ];
 
-/**
- * Tạo tài khoản demo và dữ liệu mẫu.
+/*
+ * Bộ ghi chú của tài khoản thứ hai.
  *
- * Hàm idempotent: nếu tài khoản demo đã tồn tại thì không làm gì cả. Điều này
- * cho phép gọi seed mỗi lần server khởi động mà không sinh dữ liệu trùng —
- * cần thiết khi deploy trên nền tảng không có ổ đĩa lưu trữ lâu dài.
+ * Nội dung cố tình khác hẳn bộ trên để khi trình bày có thể chỉ ra ngay: đăng
+ * nhập bằng tài khoản nào thì chỉ thấy đúng bộ ghi chú của tài khoản đó.
  */
-async function seedDemoData() {
-  if (userRepository.findByEmail(env.demoEmail)) {
+const SECOND_USER_NOTES = [
+  {
+    title: "Ghi chú riêng của user_test",
+    content:
+      "Ghi chú này thuộc tài khoản user_test. Nếu đăng nhập bằng tài khoản khác " +
+      "mà vẫn đọc được nội dung này thì tức là phân quyền dữ liệu đã hỏng.\n\n" +
+      "Cách kiểm tra: sao chép URL của ghi chú này, đăng xuất, đăng nhập bằng " +
+      "tài khoản còn lại rồi mở URL đó — kết quả phải là trang 404.",
+    category: "personal",
+    isPinned: 1,
+  },
+  {
+    title: "Mật khẩu wifi nhà",
+    content:
+      "Đây là ví dụ về dữ liệu mà chủ sở hữu không muốn ai khác đọc được.\n" +
+      "Wifi: PhongTro301 — mật khẩu: khongphaimatkhauthat",
+    category: "personal",
+    isPinned: 0,
+  },
+  {
+    title: "Việc cần làm ở công ty",
+    content:
+      "- Gửi báo cáo tuần cho quản lý\n" +
+      "- Chuẩn bị slide cho buổi họp thứ Năm\n" +
+      "- Rà soát lại hợp đồng với đối tác",
+    category: "work",
+    isPinned: 0,
+  },
+  {
+    title: "Ý tưởng khởi nghiệp",
+    content:
+      "Làm một ứng dụng đặt sân cầu lông theo giờ, có bản đồ sân gần nhất và " +
+      "cho phép ghép nhóm chơi cùng.",
+    category: "idea",
+    isPinned: 0,
+  },
+  {
+    title: "Lịch ôn thi học kỳ",
+    content:
+      "Thứ Hai: Giải tích. Thứ Ba: Đại số. Thứ Tư: Vật lý.\n" +
+      "Mỗi buổi hai tiếng, nghỉ mười phút giữa giờ.",
+    category: "study",
+    isPinned: 0,
+  },
+];
+
+/**
+ * Tạo một tài khoản kèm bộ ghi chú của nó.
+ *
+ * Bỏ qua nếu tài khoản đã tồn tại, nhờ vậy gọi bao nhiêu lần cũng an toàn.
+ */
+async function createAccountWithNotes({ fullName, email, password, notes }) {
+  if (userRepository.findByEmail(email)) {
     return { created: false };
   }
 
-  const user = await authService.register({
-    fullName: "Người dùng Demo",
-    email: env.demoEmail,
-    password: env.demoPassword,
-  });
+  const user = await authService.register({ fullName, email, password });
 
-  for (const note of DEMO_NOTES) {
+  for (const note of notes) {
     noteRepository.create({
       userId: user.id,
       title: note.title,
@@ -92,7 +138,39 @@ async function seedDemoData() {
     });
   }
 
-  return { created: true, userId: user.id, notes: DEMO_NOTES.length };
+  return { created: true, userId: user.id, notes: notes.length };
+}
+
+/**
+ * Tạo hai tài khoản demo và dữ liệu mẫu.
+ *
+ * Tài khoản thứ hai không phải để dự phòng mà là một phần của phần trình bày:
+ * có hai người dùng với hai bộ dữ liệu riêng thì mới chứng minh được mỗi người
+ * chỉ truy cập được dữ liệu của chính mình.
+ *
+ * Hàm idempotent: tài khoản nào đã tồn tại thì bỏ qua. Điều này cho phép gọi
+ * seed mỗi lần server khởi động mà không sinh dữ liệu trùng — cần thiết khi
+ * deploy trên nền tảng không có ổ đĩa lưu trữ lâu dài.
+ */
+async function seedDemoData() {
+  const primary = await createAccountWithNotes({
+    fullName: "Người dùng Demo",
+    email: env.demoEmail,
+    password: env.demoPassword,
+    notes: DEMO_NOTES,
+  });
+
+  const second = await createAccountWithNotes({
+    fullName: "User Test",
+    email: env.demo2Email,
+    password: env.demo2Password,
+    notes: SECOND_USER_NOTES,
+  });
+
+  return {
+    created: primary.created || second.created,
+    accounts: { primary, second },
+  };
 }
 
 module.exports = { seedDemoData };
@@ -101,12 +179,17 @@ module.exports = { seedDemoData };
 if (require.main === module) {
   initDatabase();
   seedDemoData()
-    .then((result) => {
-      console.log(
-        result.created
-          ? `Đã tạo tài khoản demo ${env.demoEmail} và ${result.notes} ghi chú mẫu.`
-          : `Tài khoản demo ${env.demoEmail} đã tồn tại, bỏ qua.`
-      );
+    .then(({ accounts }) => {
+      for (const [email, r] of [
+        [env.demoEmail, accounts.primary],
+        [env.demo2Email, accounts.second],
+      ]) {
+        console.log(
+          r.created
+            ? `Đã tạo tài khoản ${email} kèm ${r.notes} ghi chú mẫu.`
+            : `Tài khoản ${email} đã tồn tại, bỏ qua.`
+        );
+      }
     })
     .catch((error) => {
       console.error("Seed thất bại:", error);

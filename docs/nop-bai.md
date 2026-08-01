@@ -27,11 +27,21 @@
 |---|---|
 | **Source code** | https://github.com/Dubu0312/cong-nghe-web |
 | **Demo đã triển khai** | https://cnw.shibie.org |
-| **Tài khoản demo** | `20242507M` |
-| **Mật khẩu** | `12345678` |
 
-Ô đăng nhập nhận cả email lẫn mã học viên. Tài khoản demo được tạo tự động khi
-server khởi động, kèm 6 ghi chú mẫu thuộc nhiều danh mục khác nhau.
+Có **hai tài khoản** để giảng viên kiểm chứng phân quyền dữ liệu ngay trên giao
+diện:
+
+| Tài khoản | Mật khẩu | Dữ liệu |
+|---|---|---|
+| `20242507M` | `12345678` | 6 ghi chú |
+| `user_test` | `12345678` | 5 ghi chú khác hoàn toàn |
+
+Ô đăng nhập nhận cả email lẫn mã học viên. Cả hai tài khoản được tạo tự động khi
+server khởi động.
+
+**Cách kiểm chứng nhanh mỗi người chỉ thấy dữ liệu của mình:** đăng nhập bằng
+`user_test`, mở ghi chú đầu tiên và sao chép URL. Đăng xuất, đăng nhập bằng
+`20242507M` rồi dán lại URL đó — kết quả là trang **404**, đúng như thiết kế.
 
 ---
 
@@ -252,7 +262,24 @@ TC-11):
 Ở bước 5, phép kiểm tra so sánh cả `title`, `content` và `updated_at` trước và
 sau khi B gửi yêu cầu, để chắc chắn dữ liệu của A không bị chạm tới.
 
-### 8.3. Kiểm thử bổ sung
+### 8.3. Kiểm chứng trực tiếp trên bản demo
+
+Ngoài kiểm thử tự động, bản demo có sẵn hai tài khoản với dữ liệu riêng để kiểm
+chứng bằng tay. Kết quả đo trên hệ thống đang chạy:
+
+| Kiểm tra | Kết quả |
+|---|---|
+| Số ghi chú `20242507M` nhìn thấy | 6 |
+| Số ghi chú `user_test` nhìn thấy | 5 |
+| `20242507M` có thấy ghi chú nào của `user_test` trong danh sách | Không |
+| `user_test` có thấy ghi chú nào của `20242507M` trong danh sách | Không |
+| `user_test` mở ghi chú của chính mình | `200` |
+| `20242507M` mở cùng URL ghi chú đó | `404` |
+| `20242507M` gửi yêu cầu sửa ghi chú đó | `404`, dữ liệu không đổi |
+| `20242507M` gửi yêu cầu xóa ghi chú đó | `404`, bản ghi vẫn còn |
+| Tìm kiếm từ khóa chỉ có trong dữ liệu tài khoản kia | Không trả về kết quả |
+
+### 8.4. Kiểm thử bổ sung
 
 - **Không nhận `user_id` từ form:** một trường hợp kiểm thử gửi kèm
   `user_id` của người dùng khác trong body của `POST /notes`. Ghi chú tạo ra
