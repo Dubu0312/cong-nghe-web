@@ -7,7 +7,7 @@ riêng mình: tạo, xem danh sách, xem chi tiết, sửa, xóa, tìm kiếm, l
 mục, sắp xếp và phân trang.
 
 - Đặc tả kỹ thuật đầy đủ: [Dac-ta-ky-thuat-Note-App-cap-nhat-giao-dien-don-gian.md](./Dac-ta-ky-thuat-Note-App-cap-nhat-giao-dien-don-gian.md)
-- Link source code: _(điền link GitHub)_
+- Link source code: https://github.com/Dubu0312/cong-nghe-web
 - Link demo: _(điền link deploy)_
 
 ## Tài khoản demo
@@ -268,7 +268,7 @@ bằng `node tests/e2e/browser.js`.
 
 ## Tác giả
 
-- Họ tên: _(điền)_
-- MSHV: _(điền)_
-- Email: _(điền)_
+- Họ tên: Nguyễn Đức Mạnh
+- MSHV: 20242507M
+- Email: manh.nd242507m@sis.hust.edu.vn
 - Môn học: IT4409 – Công nghệ Web và dịch vụ trực tuyến, 2025
