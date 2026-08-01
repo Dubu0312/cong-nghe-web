@@ -1065,8 +1065,10 @@ Chi phí là khoảng 60 dòng code trong `src/config/session-store.js` — đ�
 
 ## 17.1. Tài khoản demo
 
-- Email: `demo@example.com`
-- Mật khẩu: `Demo@12345`
+- Tài khoản: `20242507M`
+- Mật khẩu: `12345678`
+
+Ô đăng nhập nhận cả email lẫn mã học viên. Đăng ký qua form vẫn bắt buộc email đúng định dạng; tài khoản demo được tạo bằng seed nên dùng thẳng mã học viên.
 
 Hai giá trị này đọc từ `DEMO_EMAIL` và `DEMO_PASSWORD` trong `.env`, không viết thẳng vào `seed.js`. Mật khẩu vẫn được hash bằng bcrypt như tài khoản thường. Ghi cặp tài khoản này vào README và file PDF nộp bài để giảng viên đăng nhập được.
 

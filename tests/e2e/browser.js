@@ -25,6 +25,11 @@ const path = require("node:path");
 const fs = require("node:fs");
 
 const BASE = process.env.BASE_URL || "http://localhost:3000";
+
+// Đọc từ biến môi trường để đổi tài khoản demo không phải sửa file test.
+const DEMO_USER = process.env.DEMO_EMAIL || "20242507M";
+const DEMO_PASSWORD = process.env.DEMO_PASSWORD || "12345678";
+
 const SHOTS = path.join(__dirname, "..", "..", "docs", "screenshots");
 fs.mkdirSync(SHOTS, { recursive: true });
 
@@ -92,12 +97,12 @@ async function noHorizontalOverflow(page) {
   check("Bootstrap được áp dụng (nút có màu nền)", styles.btnBg !== "rgba(0, 0, 0, 0)", styles.btnBg);
   check("Bootstrap được áp dụng (bo góc)", styles.btnRadius !== "0px", styles.btnRadius);
   check("font hệ thống của Bootstrap", styles.bodyFont.includes("system-ui"));
-  check("hiển thị thông tin tài khoản demo", await page.getByText("demo@example.com").isVisible());
+  check("hiển thị thông tin tài khoản demo", await page.getByText(DEMO_USER).isVisible());
   await shot(page, "01-dang-nhap");
 
   console.log("== Đăng nhập");
-  await page.fill("#email", "demo@example.com");
-  await page.fill("#password", "Demo@12345");
+  await page.fill("#email", DEMO_USER);
+  await page.fill("#password", DEMO_PASSWORD);
   await page.click("button[type=submit]");
   await page.waitForURL(`${BASE}/notes`);
   check("vào được danh sách sau đăng nhập", page.url() === `${BASE}/notes`);

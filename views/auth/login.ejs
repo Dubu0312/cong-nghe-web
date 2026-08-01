@@ -14,14 +14,16 @@
           <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
 
           <div class="mb-3">
-            <label for="email" class="form-label">Email</label>
+            <!-- Nhận cả email lẫn mã học viên: tài khoản đăng ký qua form dùng
+                 email, còn tài khoản demo do seed tạo dùng mã học viên. -->
+            <label for="email" class="form-label">Email hoặc mã học viên</label>
             <input
-              type="email"
+              type="text"
               class="form-control <%= errors.email ? 'is-invalid' : '' %>"
               id="email"
               name="email"
               value="<%= values.email || '' %>"
-              autocomplete="email"
+              autocomplete="username"
               required
             />
             <% if (errors.email) { %>
@@ -55,8 +57,8 @@
 
     <div class="alert alert-secondary mt-3 small mb-0">
       <strong>Tài khoản demo</strong><br />
-      Email: <code>demo@example.com</code><br />
-      Mật khẩu: <code>Demo@12345</code>
+      Tài khoản: <code>20242507M</code><br />
+      Mật khẩu: <code>12345678</code>
     </div>
   </div>
 </div>

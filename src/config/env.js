@@ -23,6 +23,6 @@ module.exports = {
   // Hạ số vòng bcrypt khi chạy test cho nhanh. Đây chỉ là đánh đổi tốc độ khi
   // kiểm thử; môi trường thật vẫn dùng 12 vòng.
   bcryptRounds: isTest ? 4 : Number.parseInt(process.env.BCRYPT_ROUNDS, 10) || 12,
-  demoEmail: process.env.DEMO_EMAIL || "demo@example.com",
-  demoPassword: process.env.DEMO_PASSWORD || "Demo@12345",
+  demoEmail: process.env.DEMO_EMAIL || "20242507M",
+  demoPassword: process.env.DEMO_PASSWORD || "12345678",
 };

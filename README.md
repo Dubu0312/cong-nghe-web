@@ -12,12 +12,16 @@ mục, sắp xếp và phân trang.
 
 ## Tài khoản demo
 
-| Email | Mật khẩu |
+| Tài khoản | Mật khẩu |
 |---|---|
-| `demo@example.com` | `Demo@12345` |
+| `20242507M` | `12345678` |
 
 Tài khoản này được seed tự động khi server khởi động, kèm 6 ghi chú mẫu thuộc
 nhiều danh mục khác nhau.
+
+Ô đăng nhập nhận cả email lẫn mã học viên: người dùng tự đăng ký qua form thì
+dùng email (có kiểm tra định dạng), còn tài khoản demo trên được tạo bằng seed
+nên dùng thẳng mã học viên.
 
 ## Chức năng
 
@@ -143,8 +147,8 @@ npm run db:seed    # tạo tài khoản demo và dữ liệu mẫu
 | `SESSION_SECRET` | — | **Bắt buộc ở production.** Chuỗi ngẫu nhiên dài |
 | `DATABASE_PATH` | `./data/app.db` | Vị trí file SQLite |
 | `BCRYPT_ROUNDS` | `12` | Số vòng hash |
-| `DEMO_EMAIL` | `demo@example.com` | Email tài khoản demo |
-| `DEMO_PASSWORD` | `Demo@12345` | Mật khẩu tài khoản demo |
+| `DEMO_EMAIL` | `20242507M` | Tài khoản demo (email hoặc mã học viên) |
+| `DEMO_PASSWORD` | `12345678` | Mật khẩu tài khoản demo |
 
 Sinh `SESSION_SECRET`:
 
