@@ -12,32 +12,45 @@ GitHub — cả hai đều tự vẽ sơ đồ Mermaid.
 ```mermaid
 flowchart TD
     B["Trình duyệt"]
-    K["Kiểm tra đầu vào<br/>đã đăng nhập chưa · dữ liệu có hợp lệ không"]
-    C["Nhận yêu cầu<br/>quyết định trả về trang nào"]
+    K["Kiểm tra<br/>đăng nhập · mã bảo vệ · dữ liệu nhập"]
+    C["Nhận yêu cầu<br/>quyết định trả về gì"]
     S["Xử lý nghiệp vụ<br/>tìm kiếm · lọc · phân trang"]
     R["Truy vấn dữ liệu<br/>nơi duy nhất viết câu lệnh SQL"]
     DB[("Cơ sở dữ liệu<br/>SQLite")]
     V["Tạo trang HTML"]
+    E["Trang lỗi<br/>404 · 403 · 500"]
 
     B -->|"1 · gửi yêu cầu"| K
-    K -->|"2"| C
-    C -->|"3"| S
+    K -->|"2 · hợp lệ"| C
+    C -->|"3 · chỉ khi cần đọc hoặc ghi dữ liệu"| S
     S -->|"4"| R
     R -->|"5"| DB
-    C -->|"6"| V
-    V -->|"7 · trả về trang web"| B
+    DB -.->|"6 · kết quả trả về"| C
+    C -->|"7"| V
+    V -->|"8 · trả về trang"| B
+    K -.->|"không hợp lệ"| E
+    E --> V
 
     classDef db fill:#e8f4ff,stroke:#4a90d9
+    classDef err fill:#ffeaea,stroke:#d96a6a
     class R,DB db
+    class E err
 ```
 
-Hai điểm quan trọng nhất của cách chia này:
+Ba điều cần đọc đúng ở sơ đồ này:
 
-1. **Chỉ một chỗ viết SQL.** Toàn bộ câu lệnh truy vấn nằm trong lớp "Truy vấn
-   dữ liệu". Khi cần kiểm tra dữ liệu người dùng có bị lộ hay không thì chỉ phải
-   đọc đúng chỗ đó.
-2. **Lớp truy vấn không biết gì về web,** lớp nhận yêu cầu không tự viết SQL.
-   Sửa một lớp không làm ảnh hưởng lớp khác.
+1. **Bước 3 có điều kiện.** Không phải yêu cầu nào cũng xuống tới database. Mở
+   form tạo ghi chú hay xem trang giới thiệu thì chỉ đi từ bước 2 sang bước 7,
+   bỏ qua hẳn phần dữ liệu.
+2. **Bước 6 đi ngược lên theo đúng chuỗi đã gọi:** database trả về cho lớp truy
+   vấn, lớp truy vấn trả cho lớp nghiệp vụ, rồi mới tới lớp nhận yêu cầu. Sơ đồ
+   vẽ gộp thành một mũi tên cho gọn.
+3. **Chỉ một chỗ viết SQL** — lớp "Truy vấn dữ liệu". Khi cần kiểm tra dữ liệu
+   người dùng có bị lộ hay không thì chỉ phải đọc đúng chỗ đó.
+
+Ô "Trang lỗi" ở đây chỉ vẽ nhánh lỗi từ bước kiểm tra cho dễ nhìn. Thực tế lỗi
+phát sinh ở bất kỳ lớp nào cũng đổ về đúng ô này — chi tiết từng nhánh xem sơ đồ
+ở mục 2.
 
 Tên gọi trong code: lớp nhận yêu cầu là *controller*, xử lý nghiệp vụ là
 *service*, truy vấn dữ liệu là *repository*.

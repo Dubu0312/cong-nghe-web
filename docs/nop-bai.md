@@ -138,18 +138,22 @@ nó.
 
 ![Sơ đồ kiến trúc tổng quát](diagrams/1-tong-quat.png)
 
-Một yêu cầu đi theo thứ tự: trình duyệt gửi yêu cầu, hệ thống kiểm tra đã đăng
-nhập và dữ liệu có hợp lệ hay không, rồi chuyển cho lớp nhận yêu cầu. Lớp này
-gọi lớp xử lý nghiệp vụ, lớp nghiệp vụ gọi lớp truy vấn dữ liệu để đọc hoặc ghi
-vào cơ sở dữ liệu. Cuối cùng hệ thống tạo trang HTML và trả về trình duyệt.
+Trình duyệt gửi yêu cầu, hệ thống kiểm tra đăng nhập và dữ liệu nhập trước, rồi
+mới chuyển cho lớp nhận yêu cầu. Nếu yêu cầu đó cần đọc hoặc ghi dữ liệu thì lớp
+nhận yêu cầu gọi tiếp xuống lớp nghiệp vụ và lớp truy vấn dữ liệu; kết quả đi
+ngược lên theo đúng chuỗi đã gọi. Cuối cùng hệ thống tạo trang HTML và trả về.
 
-Hai điểm quan trọng của cách chia này:
+Ba điểm cần lưu ý khi đọc sơ đồ:
 
-1. **Chỉ có một chỗ viết câu lệnh SQL** — lớp truy vấn dữ liệu. Nhờ vậy khi cần
+1. **Bước 3 có điều kiện.** Không phải yêu cầu nào cũng xuống tới cơ sở dữ liệu.
+   Mở form tạo ghi chú hoặc xem trang giới thiệu thì đi thẳng từ bước 2 sang
+   bước 7.
+2. **Chỉ có một chỗ viết câu lệnh SQL** — lớp truy vấn dữ liệu. Nhờ vậy khi cần
    kiểm tra dữ liệu người dùng có bị lộ hay không thì chỉ phải xem đúng chỗ đó
    thay vì rà cả dự án.
-2. **Mọi lỗi đều đổ về một chỗ xử lý duy nhất** đặt ở cuối, nơi quyết định hiển
-   thị trang 404, 403 hay 500. Không phải rải rác việc bắt lỗi ở khắp nơi.
+3. **Mọi lỗi đều đổ về một chỗ xử lý duy nhất,** nơi quyết định hiển thị trang
+   404, 403 hay 500. Sơ đồ chỉ vẽ nhánh lỗi từ bước kiểm tra cho dễ nhìn; thực
+   tế lỗi phát sinh ở lớp nào cũng đi tới cùng chỗ đó.
 
 Trong mã nguồn, ba lớp giữa lần lượt có tên là *controller* (nhận yêu cầu),
 *service* (xử lý nghiệp vụ) và *repository* (truy vấn dữ liệu).
