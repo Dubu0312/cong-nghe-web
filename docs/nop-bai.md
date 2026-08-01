@@ -79,8 +79,17 @@ server khởi động.
 
 ### 3.4. Phân quyền dữ liệu
 
-Mỗi người dùng chỉ truy cập được ghi chú của chính mình. Chi tiết cách triển
-khai và kết quả kiểm thử ở mục 8.
+Mỗi người dùng chỉ truy cập được ghi chú của chính mình:
+
+- Danh sách chỉ hiển thị ghi chú của người đang đăng nhập.
+- Tìm kiếm và lọc cũng chỉ chạy trong phạm vi dữ liệu của người đó.
+- Mở URL một ghi chú không thuộc mình thì nhận trang 404, kể cả khi đoán đúng
+  mã số ghi chú.
+- Gửi yêu cầu sửa hoặc xóa ghi chú của người khác cũng nhận 404 và dữ liệu của
+  người đó không bị thay đổi.
+
+Bản demo có sẵn hai tài khoản với hai bộ dữ liệu riêng để kiểm chứng việc này
+ngay trên giao diện. Cách triển khai và bằng chứng kiểm thử ở mục 8.
 
 ### 3.5. Giao diện
 
@@ -298,6 +307,25 @@ chứng bằng tay. Kết quả đo trên hệ thống đang chạy:
 | `20242507M` gửi yêu cầu xóa ghi chú đó | `404`, bản ghi vẫn còn |
 | Tìm kiếm từ khóa chỉ có trong dữ liệu tài khoản kia | Không trả về kết quả |
 
+**Bằng chứng bằng ảnh.** Đây là danh sách ghi chú khi đăng nhập bằng `user_test`
+— gồm 5 ghi chú, không có ghi chú nào của tài khoản `20242507M`:
+
+![Danh sách ghi chú của user_test](screenshots/11-danh-sach-user-test.png)
+
+So sánh với danh sách của `20242507M` ở mục 10: hai bộ dữ liệu **không có tiêu đề
+nào trùng nhau** (đã kiểm tra tự động, số tiêu đề trùng = 0).
+
+Tiếp theo là kết quả khi sao chép URL một ghi chú của `user_test` rồi mở bằng
+phiên đăng nhập của `20242507M`. Chú ý thanh điều hướng phía trên vẫn hiển thị
+“Người dùng Demo”, tức đang đăng nhập bình thường, nhưng nội dung trả về là
+trang 404:
+
+![Truy cập chéo trả về 404](screenshots/12-truy-cap-cheo-404.png)
+
+Sở dĩ trả về 404 chứ không phải 403 là để không tiết lộ rằng ghi chú đó có tồn
+tại. Với người dùng, hai trường hợp “ghi chú không tồn tại” và “ghi chú không
+phải của bạn” là không phân biệt được.
+
 ### 8.4. Kiểm thử bổ sung
 
 - **Không nhận `user_id` từ form:** một trường hợp kiểm thử gửi kèm
@@ -320,6 +348,7 @@ chứng bằng tay. Kết quả đo trên hệ thống đang chạy:
 | Jest + Supertest | 51 trường hợp ở tầng HTTP, chạy trên database trong RAM | 51/51 đạt |
 | Kiểm chứng mã trạng thái | 50 request thật đối chiếu với tài liệu endpoint | 50/50 đạt |
 | Playwright (Chromium) | 42 kiểm tra trên trình duyệt thật, gồm responsive 360/768/1366px | 42/42 đạt |
+| Kiểm chứng phân quyền | Hai phiên đăng nhập song song, đối chiếu hai danh sách và thử truy cập chéo | Đạt, 0 tiêu đề trùng |
 | `npm audit` | Lỗ hổng phụ thuộc | 0 lỗ hổng |
 
 Bộ Playwright kiểm tra được những lỗi mà kiểm thử tầng HTTP không phát hiện
@@ -361,6 +390,13 @@ mobile hay không, và hộp thoại xác nhận khi xóa có hiện ra hay khô
 ### Trang 404
 
 ![Trang 404](screenshots/08-404.png)
+
+### Danh sách của tài khoản thứ hai `user_test`
+
+Cùng một ứng dụng, đăng nhập bằng tài khoản khác thì thấy bộ dữ liệu khác hoàn
+toàn — không có ghi chú nào của tài khoản `20242507M`.
+
+![Danh sách của user_test](screenshots/11-danh-sach-user-test.png)
 
 ---
 

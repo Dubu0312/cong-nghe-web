@@ -40,8 +40,11 @@ const html = `<!doctype html>
         padding: 9px 11px; font-size: 8.5pt; overflow-wrap: break-word;
         white-space: pre-wrap; break-inside: avoid; }
   pre code { background: none; padding: 0; font-size: 8.5pt; }
-  img { max-width: 100%; border: 1px solid #ccc; border-radius: 4px;
-        display: block; margin: 8px auto; break-inside: avoid; }
+  /* Giới hạn cả chiều cao: ảnh chụp mobile rất cao, nếu chỉ giới hạn chiều
+     rộng thì mỗi ảnh chiếm gần trọn một trang. */
+  img { max-width: 100%; max-height: 145mm; width: auto; border: 1px solid #ccc;
+        border-radius: 4px; display: block; margin: 8px auto;
+        break-inside: avoid; }
   blockquote { border-left: 3px solid #999; margin: 10px 0; padding: 4px 12px;
                color: #444; background: #fafafa; }
   hr { border: none; border-top: 1px solid #ddd; margin: 18px 0; }

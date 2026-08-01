@@ -52,6 +52,16 @@ async function shot(page, name) {
   await page.screenshot({ path: path.join(SHOTS, `${name}.png`), fullPage: true });
 }
 
+/**
+ * Chụp đúng khung màn hình, không cuộn hết trang.
+ *
+ * Dùng cho ảnh mobile: chụp cả trang ở khổ 360px cho ra ảnh cao gấp sáu lần
+ * chiều rộng, đưa vào báo cáo thì co lại thành một dải hẹp không đọc được.
+ */
+async function shotViewport(page, name) {
+  await page.screenshot({ path: path.join(SHOTS, `${name}.png`), fullPage: false });
+}
+
 /** Kiểm tra trang không bị tràn ngang — yêu cầu responsive quan trọng nhất. */
 async function noHorizontalOverflow(page) {
   return page.evaluate(
@@ -265,9 +275,14 @@ async function noHorizontalOverflow(page) {
       });
       check("mobile: nút cao tối thiểu 40px", btnHeight >= 40, `${btnHeight}px`);
 
-      await shot(page, "09-danh-sach-mobile");
+      // Đóng lại menu đã mở ở bước kiểm tra hamburger phía trên, để ảnh chụp
+      // thể hiện đúng trạng thái mặc định của trang.
+      await toggler.click();
+      await page.waitForTimeout(500);
+      await shotViewport(page, "09-danh-sach-mobile");
+
       await page.goto(`${BASE}/notes/new`);
-      await shot(page, "10-form-mobile");
+      await shotViewport(page, "10-form-mobile");
     }
 
     if (name === "desktop") {
