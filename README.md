@@ -8,7 +8,7 @@ mục, sắp xếp và phân trang.
 
 - Đặc tả kỹ thuật đầy đủ: [Dac-ta-ky-thuat-Note-App-cap-nhat-giao-dien-don-gian.md](./Dac-ta-ky-thuat-Note-App-cap-nhat-giao-dien-don-gian.md)
 - Link source code: https://github.com/Dubu0312/cong-nghe-web
-- Link demo: _(điền link deploy)_
+- Link demo: https://cnw.shibie.org
 
 ## Tài khoản demo
 
