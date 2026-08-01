@@ -7,171 +7,143 @@ GitHub — cả hai đều tự vẽ sơ đồ Mermaid.
 
 ## 1. Sơ đồ tổng quát
 
-Toàn bộ ứng dụng chia làm 5 tầng. Quy tắc xuyên suốt: **mỗi tầng chỉ nói chuyện
-với tầng ngay dưới nó**, controller không bao giờ viết SQL, repository không
-bao giờ biết gì về HTTP.
+Ứng dụng chia làm các lớp, mỗi lớp làm đúng một việc và chỉ gọi lớp ngay dưới nó.
 
 ```mermaid
 flowchart TD
     B["Trình duyệt"]
-    MW["Middleware chung<br/><i>helmet · session · locals · csrf</i>"]
-    R["Router<br/><i>auth.routes.js · note.routes.js</i>"]
-    C["Controller<br/>đọc request, chọn HTTP status<br/><i>auth.controller.js · note.controller.js</i>"]
-    S["Service<br/>quy tắc nghiệp vụ, chuẩn hóa dữ liệu<br/><i>auth.service.js · note.service.js</i>"]
-    RP["Repository<br/><b>nơi duy nhất viết SQL</b><br/>luôn kèm user_id<br/><i>user.repository.js · note.repository.js</i>"]
-    DB[("SQLite<br/>users · notes · sessions")]
-    V["View EJS<br/>escape mọi dữ liệu người dùng"]
-    EH["Error handler<br/>404 · 403 · 500"]
+    K["Kiểm tra đầu vào<br/>đã đăng nhập chưa · dữ liệu có hợp lệ không"]
+    C["Nhận yêu cầu<br/>quyết định trả về trang nào"]
+    S["Xử lý nghiệp vụ<br/>tìm kiếm · lọc · phân trang"]
+    R["Truy vấn dữ liệu<br/>nơi duy nhất viết câu lệnh SQL"]
+    DB[("Cơ sở dữ liệu<br/>SQLite")]
+    V["Tạo trang HTML"]
 
-    B -->|"1 · request"| MW
-    MW -->|"2"| R
-    R -->|"3"| C
-    C -->|"4"| S
-    S -->|"5"| RP
-    RP -->|"6 · SQL"| DB
-    C -->|"7 · dữ liệu đã có"| V
-    V -->|"8 · HTML"| B
+    B -->|"1 · gửi yêu cầu"| K
+    K -->|"2"| C
+    C -->|"3"| S
+    S -->|"4"| R
+    R -->|"5"| DB
+    C -->|"6"| V
+    V -->|"7 · trả về trang web"| B
 
-    C -.->|"ném lỗi"| EH
-    S -.->|"ném lỗi"| EH
-    EH -.->|"trang lỗi"| V
-
-    classDef data fill:#e8f4ff,stroke:#4a90d9
-    classDef err fill:#ffeaea,stroke:#d96a6a
-    class RP,DB data
-    class EH err
+    classDef db fill:#e8f4ff,stroke:#4a90d9
+    class R,DB db
 ```
 
-Đường đi chính là 1→8. Kết quả truy vấn quay ngược lên theo đúng chuỗi gọi hàm
-(repository trả về service, service trả về controller) nên không vẽ mũi tên
-ngược cho đỡ rối.
+Hai điểm quan trọng nhất của cách chia này:
 
-**Vì sao chia tầng như vậy:** khi cần biết "dữ liệu của người dùng có bị lộ
-không", chỉ phải đọc đúng 2 file repository chứ không phải rà cả dự án. Mọi câu
-truy vấn ghi chú đều nằm ở một chỗ và đều có `WHERE ... AND user_id = ?`.
+1. **Chỉ một chỗ viết SQL.** Toàn bộ câu lệnh truy vấn nằm trong lớp "Truy vấn
+   dữ liệu". Khi cần kiểm tra dữ liệu người dùng có bị lộ hay không thì chỉ phải
+   đọc đúng chỗ đó.
+2. **Lớp truy vấn không biết gì về web,** lớp nhận yêu cầu không tự viết SQL.
+   Sửa một lớp không làm ảnh hưởng lớp khác.
+
+Tên gọi trong code: lớp nhận yêu cầu là *controller*, xử lý nghiệp vụ là
+*service*, truy vấn dữ liệu là *repository*.
 
 ---
 
-## 2. Chuỗi middleware — thứ tự rất quan trọng
+## 2. Các bước kiểm tra trước khi xử lý
 
-Đây là thứ tự đăng ký thật trong `src/app.js`. Đảo thứ tự là hỏng.
+Mỗi yêu cầu phải đi qua lần lượt các bước sau. Bước nào không đạt thì dừng ngay
+tại đó và trả về mã lỗi tương ứng.
 
 ```mermaid
 flowchart TD
-    A["Request"] --> H["helmet<br/>security header + CSP"]
-    H --> M["morgan<br/>ghi log"]
-    M --> BP["body parser<br/>giới hạn 200kb"]
-    BP --> ST["static<br/>public/"]
-    ST --> SE["session<br/>đọc cookie, nạp session"]
-    SE --> L["locals<br/>currentUser, flash, helper"]
-    L --> CS["csrf<br/>kiểm tra token nếu là POST"]
-    CS --> RA["requireAuth<br/>chỉ với /notes"]
-    RA --> RT["Route handler"]
-    RT --> NF["notFound<br/>URL không khớp"]
-    NF --> EH["errorHandler<br/>luôn ở cuối cùng"]
+    A["Yêu cầu từ trình duyệt"] --> B{"Có phải yêu cầu<br/>thay đổi dữ liệu?"}
+    B -->|"có"| C{"Kèm mã bảo vệ<br/>hợp lệ không?"}
+    B -->|"không"| D{"Đã đăng nhập chưa?"}
+    C -->|"không"| E["Trả về lỗi 403"]
+    C -->|"có"| D
+    D -->|"chưa"| F["Chuyển về trang đăng nhập"]
+    D -->|"rồi"| G{"Dữ liệu nhập<br/>có hợp lệ không?"}
+    G -->|"không"| H["Trả về lỗi 422<br/>kèm form đã điền lại"]
+    G -->|"có"| I["Xử lý và trả về trang"]
+
+    classDef err fill:#ffeaea,stroke:#d96a6a
+    classDef ok fill:#e9f7ea,stroke:#5aa563
+    class E,F,H err
+    class I ok
 ```
 
-Ba ràng buộc về thứ tự cần nhớ:
-
-| Ràng buộc | Lý do |
-|---|---|
-| `body parser` phải trước `csrf` | `csrf` đọc `req.body._csrf`, chưa parse thì chưa có |
-| `session` phải trước `locals` và `csrf` | Cả hai đều đọc/ghi vào `req.session` |
-| `errorHandler` phải cuối cùng | Express chỉ nhận diện error handler qua 4 tham số và chỉ gọi khi mọi thứ trước đó đã bỏ qua |
+"Mã bảo vệ" ở đây là **CSRF token** — một chuỗi ngẫu nhiên server gắn vào mỗi
+form, khi nhận lại thì so xem có đúng chuỗi đã gắn hay không. Mục đích: chặn
+trang web khác giả mạo yêu cầu thay mặt người dùng.
 
 ---
 
-## 3. Luồng một request cụ thể — tạo ghi chú
+## 3. Luồng tạo một ghi chú
 
 ```mermaid
 sequenceDiagram
     actor U as Người dùng
-    participant M as Middleware
-    participant C as Controller
-    participant S as Service
-    participant R as Repository
-    participant DB as SQLite
+    participant W as Máy chủ web
+    participant X as Xử lý nghiệp vụ
+    participant D as Cơ sở dữ liệu
 
-    U->>C: GET /notes/new
-    C-->>U: Form kèm token ẩn _csrf
+    U->>W: Mở trang tạo ghi chú
+    W-->>U: Hiện form
 
-    U->>M: POST /notes
-
-    Note over M: Cổng 1 — CSRF
-    alt Token sai hoặc thiếu
-        M-->>U: 403
-    end
-
-    Note over M: Cổng 2 — requireAuth
-    alt Chưa đăng nhập
-        M-->>U: 302 về /auth/login
-    end
-
-    Note over M: Cổng 3 — validator
-    alt title/content/category sai
-        M-->>U: 422 kèm form đã điền lại
-    end
-
-    M->>C: Qua cả 3 cổng
-    C->>S: createNote(session.userId, form)
-    Note over C,S: user_id lấy từ SESSION,<br/>không bao giờ lấy từ form
-    S->>S: Sinh search_text đã bỏ dấu
-    S->>R: create(...)
-    R->>DB: INSERT INTO notes
-    DB-->>R: id mới
-    R-->>S: ghi chú
-    S-->>C: ghi chú
-    C-->>U: 302 tới /notes/:id
+    U->>W: Bấm Lưu
+    W->>W: Kiểm tra mã bảo vệ, đăng nhập, dữ liệu
+    W->>X: Tạo ghi chú cho người đang đăng nhập
+    Note over W,X: Lấy người sở hữu từ phiên đăng nhập,<br/>không lấy từ dữ liệu người dùng gửi lên
+    X->>D: Thêm một dòng vào bảng ghi chú
+    D-->>X: Trả về mã của ghi chú mới
+    X-->>W: Xong
+    W-->>U: Chuyển sang trang chi tiết ghi chú
 ```
 
-Điểm cần chỉ ra khi vấn đáp: có **bốn lớp chặn** trước khi dữ liệu chạm database
-— CSRF, đăng nhập, validation, rồi mới tới nghiệp vụ. Và `user_id` được lấy từ
-session ở tầng controller, nên dù người dùng có thêm trường ẩn `user_id` vào
-form cũng vô tác dụng.
+Điểm cần nhấn: người sở hữu ghi chú được lấy từ **phiên đăng nhập** ở phía
+server, nên dù người dùng có tự thêm trường ẩn vào form để mạo danh người khác
+cũng không có tác dụng.
 
 ---
 
 ## 4. Mô hình dữ liệu
 
+Hai bảng chính, quan hệ một người dùng có nhiều ghi chú.
+
 ```mermaid
 erDiagram
-    USERS ||--o{ NOTES : "sở hữu"
+    USERS ||--o{ NOTES : "có nhiều"
 
     USERS {
-        integer id PK
+        integer id
         text full_name
-        text email UK
+        text email
         text password_hash
         datetime created_at
         datetime updated_at
     }
 
     NOTES {
-        integer id PK
-        integer user_id FK
+        integer id
+        integer user_id
         text title
         text content
         text category
-        text search_text
         integer is_pinned
         datetime created_at
         datetime updated_at
     }
-
-    SESSIONS {
-        text sid PK
-        text data
-        integer expires_at
-    }
 ```
 
-- `notes.user_id` có khóa ngoại `ON DELETE CASCADE`: xóa người dùng thì ghi chú
-  của họ tự mất theo.
-- `search_text` là bản `title + content` đã viết thường và bỏ dấu, chỉ phục vụ
-  tìm kiếm, không bao giờ hiển thị ra giao diện.
-- Bảng `sessions` do session store tự viết quản lý, không liên quan nghiệp vụ.
-- Hai index: `(user_id, updated_at)` cho danh sách mặc định và
-  `(user_id, category)` cho bộ lọc.
+Tên cột giữ đúng như trong cơ sở dữ liệu. Nghĩa của các cột: `full_name` họ tên,
+`password_hash` mật khẩu đã mã hóa, `title` tiêu đề, `content` nội dung,
+`category` danh mục, `is_pinned` có ghim hay không, `created_at` ngày tạo,
+`updated_at` ngày cập nhật.
+
+- Cột `user_id` trong bảng ghi chú cho biết ghi chú thuộc về ai. **Mọi câu truy
+  vấn ghi chú đều kèm điều kiện cột này**, nhờ vậy người dùng không thể đọc dữ
+  liệu của nhau.
+- Xóa một người dùng thì ghi chú của họ tự xóa theo.
+- Mật khẩu lưu dưới dạng đã mã hóa một chiều, không thể đọc lại thành mật khẩu gốc.
+- Bảng ghi chú còn một cột phụ lưu bản tiêu đề và nội dung đã bỏ dấu, chỉ dùng
+  cho việc tìm kiếm không dấu.
+- Ngoài hai bảng trên còn một bảng nhỏ lưu phiên đăng nhập, không liên quan
+  nghiệp vụ.
 
 ---
 
@@ -179,19 +151,20 @@ erDiagram
 
 ```
 src/
-├── server.js          khởi tạo DB, seed, rồi listen
-├── app.js             ráp middleware và router theo đúng thứ tự
-├── config/            biến môi trường, session, session store
-├── database/          schema.sql, kết nối, init, seed
-├── routes/            khai báo endpoint, gắn middleware cho từng route
-├── controllers/       đọc request, chọn status code, render view
-├── services/          nghiệp vụ: phân trang, chuẩn hóa tìm kiếm, ném 404
-├── repositories/      SQL, luôn kèm user_id
-├── middleware/        auth, csrf, locals, validation, xử lý lỗi
-├── validators/        quy tắc express-validator
-└── utils/             hằng số, bỏ dấu tiếng Việt, format thời gian, AppError
+├── server.js          khởi động máy chủ
+├── app.js             lắp các bước kiểm tra và các đường dẫn
+├── config/            cấu hình, phiên đăng nhập
+├── database/          tạo bảng, dữ liệu mẫu
+├── routes/            khai báo các đường dẫn
+├── controllers/       nhận yêu cầu, chọn trang trả về
+├── services/          xử lý nghiệp vụ
+├── repositories/      câu lệnh SQL, luôn kèm user_id
+├── middleware/        kiểm tra đăng nhập, mã bảo vệ, xử lý lỗi
+├── validators/        quy tắc kiểm tra dữ liệu nhập
+└── utils/             hàm dùng chung
 
-views/                 EJS: partials, auth, notes, errors
-public/                Bootstrap tự host, CSS, JS phía client
-tests/                 Jest + Supertest, và bộ E2E chạy trên Chromium
+views/                 các trang HTML
+public/                CSS, JavaScript, thư viện giao diện
+tests/                 kiểm thử tự động
+docs/                  tài liệu và ảnh chụp
 ```

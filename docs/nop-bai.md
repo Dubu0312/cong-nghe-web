@@ -124,29 +124,48 @@ CDN — giữ được chính sách bảo mật mặc định mà giao diện v�
 
 ## 5. Sơ đồ kiến trúc
 
-Ứng dụng chia năm tầng, mỗi tầng chỉ gọi tầng ngay dưới nó. Controller không
-viết SQL, repository không biết gì về HTTP.
+Ứng dụng chia thành các lớp, mỗi lớp làm đúng một việc và chỉ gọi lớp ngay dưới
+nó.
 
 ![Sơ đồ kiến trúc tổng quát](diagrams/1-tong-quat.png)
 
-Đường đi của một request: trình duyệt → middleware chung (helmet, session,
-locals, csrf) → router → controller → service → repository → SQLite. Kết quả
-quay ngược lên controller, controller render view EJS và trả HTML. Lỗi ở bất kỳ
-tầng nào cũng rơi về một error handler duy nhất ở cuối, nơi chọn trang 404, 403
-hay 500.
+Một yêu cầu đi theo thứ tự: trình duyệt gửi yêu cầu, hệ thống kiểm tra đã đăng
+nhập và dữ liệu có hợp lệ hay không, rồi chuyển cho lớp nhận yêu cầu. Lớp này
+gọi lớp xử lý nghiệp vụ, lớp nghiệp vụ gọi lớp truy vấn dữ liệu để đọc hoặc ghi
+vào cơ sở dữ liệu. Cuối cùng hệ thống tạo trang HTML và trả về trình duyệt.
 
-Lợi ích của cách chia này: toàn bộ câu lệnh SQL nằm gọn trong hai tệp
-repository, nên khi cần kiểm tra "dữ liệu người dùng có bị lộ không" thì chỉ
-phải đọc hai tệp đó thay vì rà cả dự án.
+Hai điểm quan trọng của cách chia này:
+
+1. **Chỉ có một chỗ viết câu lệnh SQL** — lớp truy vấn dữ liệu. Nhờ vậy khi cần
+   kiểm tra dữ liệu người dùng có bị lộ hay không thì chỉ phải xem đúng chỗ đó
+   thay vì rà cả dự án.
+2. **Mọi lỗi đều đổ về một chỗ xử lý duy nhất** đặt ở cuối, nơi quyết định hiển
+   thị trang 404, 403 hay 500. Không phải rải rác việc bắt lỗi ở khắp nơi.
+
+Trong mã nguồn, ba lớp giữa lần lượt có tên là *controller* (nhận yêu cầu),
+*service* (xử lý nghiệp vụ) và *repository* (truy vấn dữ liệu).
+
+### Các bước kiểm tra một yêu cầu
+
+![Các bước kiểm tra](diagrams/2-cac-buoc-kiem-tra.png)
+
+Bước nào không đạt thì dừng ngay tại đó và trả về mã lỗi tương ứng, không đi
+tiếp xuống các lớp dưới.
 
 ### Mô hình dữ liệu
 
 ![Mô hình dữ liệu](diagrams/4-mo-hinh-du-lieu.png)
 
-Bảng `notes` có khóa ngoại `user_id` với `ON DELETE CASCADE`. Cột `search_text`
-lưu sẵn phiên bản `title + content` đã viết thường và bỏ dấu, chỉ phục vụ tìm
-kiếm. Hai index phục vụ hai truy vấn phổ biến nhất: `(user_id, updated_at)` cho
-danh sách mặc định và `(user_id, category)` cho bộ lọc theo danh mục.
+Quan hệ: một người dùng có nhiều ghi chú. Cột `user_id` trong bảng ghi chú cho
+biết ghi chú thuộc về ai, và **mọi câu truy vấn ghi chú đều kèm điều kiện cột
+này** — đây là cơ chế bảo đảm người dùng không đọc được dữ liệu của nhau. Xóa
+một người dùng thì ghi chú của họ tự xóa theo.
+
+Ngoài các cột trong sơ đồ, bảng ghi chú còn một cột phụ lưu bản tiêu đề và nội
+dung đã bỏ dấu để phục vụ tìm kiếm không dấu, và cơ sở dữ liệu có thêm một bảng
+nhỏ lưu phiên đăng nhập. Hai bảng được đánh chỉ mục theo `user_id` kèm thời điểm
+cập nhật và theo `user_id` kèm danh mục, giúp truy vấn danh sách và bộ lọc nhanh
+hơn khi dữ liệu nhiều.
 
 ---
 
