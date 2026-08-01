@@ -146,9 +146,21 @@ chk "hợp lệ = 302"         302 "$(code "$auth" -X POST -d "_csrf=$t" "$B/aut
 
 # ── Dọn dẹp ───────────────────────────────────────────────────────────────────
 # Phần kiểm tra 409 cần đăng ký thật một tài khoản, nên phải xóa lại để không
-# tích rác trong database sau mỗi lần chạy. Chỉ làm được khi script chạy cùng
-# máy với database; nếu kiểm chứng bản deploy thì bỏ qua.
-if [ -f "$(dirname "$0")/../../src/database/db.js" ]; then
+# tích rác trong database sau mỗi lần chạy.
+#
+# Chỉ dọn khi đang kiểm chứng server chạy trên chính máy này. Nếu BASE_URL trỏ
+# tới bản deploy thì database nằm ở máy khác, xóa ở đây là xóa sai chỗ — khi đó
+# in ra cảnh báo để tự xử lý.
+case "$B" in
+  http://localhost*|http://127.0.0.1*) local_db=1 ;;
+  *) local_db=0 ;;
+esac
+
+if [ "$local_db" -eq 0 ]; then
+  echo
+  echo "Lưu ý: đang kiểm chứng server từ xa nên không dọn được tài khoản test."
+  echo "       Phần kiểm tra 409 đã tạo một tài khoản verify...@example.com trên đó."
+elif [ -f "$(dirname "$0")/../../src/database/db.js" ]; then
   cleaned=$(cd "$(dirname "$0")/../.." && node -e "
     const db = require('./src/database/db');
     const r = db.prepare(\"DELETE FROM users WHERE email LIKE 'verify%@example.com'\").run();
