@@ -73,29 +73,14 @@ nên dùng thẳng mã học viên.
 
 ## Kiến trúc
 
-```
-Trình duyệt
-    │  HTTP
-    ▼
-Express Router
-    │
-    ▼
-Middleware   (session → locals → csrf → requireAuth)
-    │
-    ▼
-Controller   đọc request, chọn status code, render view
-    │
-    ▼
-Service      quy tắc nghiệp vụ, chuẩn hóa dữ liệu đầu vào
-    │
-    ▼
-Repository   nơi duy nhất viết SQL, luôn ràng buộc user_id
-    │
-    ▼
-SQLite
-```
+Sơ đồ đầy đủ kèm giải thích: [docs/kien-truc.md](./docs/kien-truc.md) — gồm sơ
+đồ tổng quát, chuỗi middleware, luồng một request cụ thể và mô hình dữ liệu.
+Ảnh đã render sẵn trong [docs/diagrams/](./docs/diagrams).
 
-Nguyên tắc: controller không viết SQL, repository không biết gì về HTTP.
+![Sơ đồ tổng quát](./docs/diagrams/1-tong-quat.png)
+
+Nguyên tắc: mỗi tầng chỉ gọi tầng ngay dưới nó. Controller không viết SQL,
+repository không biết gì về HTTP.
 
 ```
 src/
