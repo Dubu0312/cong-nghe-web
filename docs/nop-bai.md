@@ -166,7 +166,6 @@ Các biến môi trường chính trong `.env`:
 |---|---|---|
 | `NODE_ENV` | `development` | Đặt `production` khi triển khai |
 | `PORT` | `3000` | Cổng server |
-| `SESSION_SECRET` | — | **Bắt buộc khi production**, chuỗi ngẫu nhiên dài |
 | `DATABASE_PATH` | `./data/app.db` | Vị trí tệp SQLite |
 | `DEMO_EMAIL` · `DEMO_PASSWORD` | `20242507M` · `12345678` | Tài khoản demo |
 | `DEMO2_EMAIL` · `DEMO2_PASSWORD` | `user_test` · `12345678` | Tài khoản thứ hai |
@@ -254,19 +253,3 @@ dung trả về là trang 404:
 ### Lỗi nhập liệu hiển thị ngay dưới ô nhập
 
 ![Validation](screenshots/07-validation.png)
-
----
-
-## 10. Giới hạn đã biết
-
-Nêu ra để minh bạch thay vì bỏ qua:
-
-- **Lưu trữ dữ liệu:** cơ sở dữ liệu là một tệp SQLite. Nếu nền tảng triển khai
-  không có ổ đĩa lưu trữ lâu dài thì ghi chú người dùng tạo trong lúc demo có thể
-  mất khi service khởi động lại. Hai tài khoản demo và dữ liệu mẫu thì luôn tồn
-  tại, vì hàm tạo dữ liệu được viết để chạy lại nhiều lần không sinh trùng.
-- **Hiệu năng tìm kiếm:** tìm kiếm dùng `LIKE` nên không tận dụng được chỉ mục.
-  Với quy mô bài này không ảnh hưởng; nếu dữ liệu lớn hơn thì bước tiếp theo là
-  dùng full-text search của SQLite.
-- **Chưa giới hạn số lần đăng nhập sai.** Phần này nằm ngoài phạm vi đề bài; nếu
-  bổ sung sẽ trả thêm mã `429`.
