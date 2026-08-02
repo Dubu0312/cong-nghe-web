@@ -218,12 +218,6 @@ khoản demo khi khởi động. Nếu muốn làm thủ công thì có `npm run
 | `DEMO_EMAIL` | `20242507M` | Tài khoản demo |
 | `DEMO_PASSWORD` | `12345678` | Mật khẩu tài khoản demo |
 
-### 6.4. Chạy kiểm thử
-
-```bash
-npm test
-```
-
 ---
 
 ## 7. Danh sách mã trạng thái HTTP đã xử lý
@@ -316,7 +310,7 @@ chứng bằng tay. Kết quả đo trên hệ thống đang chạy:
 
 ![Danh sách ghi chú của user_test](screenshots/11-danh-sach-user-test.png)
 
-So sánh với danh sách của `20242507M` ở mục 10: hai bộ dữ liệu **không có tiêu đề
+So sánh với danh sách của `20242507M` ở mục 9: hai bộ dữ liệu **không có tiêu đề
 nào trùng nhau** (đã kiểm tra tự động, số tiêu đề trùng = 0).
 
 Tiếp theo là kết quả khi sao chép URL một ghi chú của `user_test` rồi mở bằng
@@ -345,23 +339,7 @@ phải của bạn” là không phân biệt được.
 
 ---
 
-## 9. Kết quả kiểm thử tự động
-
-| Bộ kiểm thử | Phạm vi | Kết quả |
-|---|---|---|
-| Jest + Supertest | 51 trường hợp ở tầng HTTP, chạy trên database trong RAM | 51/51 đạt |
-| Kiểm chứng mã trạng thái | 50 request thật đối chiếu với tài liệu endpoint | 50/50 đạt |
-| Playwright (Chromium) | 42 kiểm tra trên trình duyệt thật, gồm responsive 360/768/1366px | 42/42 đạt |
-| Kiểm chứng phân quyền | Hai phiên đăng nhập song song, đối chiếu hai danh sách và thử truy cập chéo | Đạt, 0 tiêu đề trùng |
-| `npm audit` | Lỗ hổng phụ thuộc | 0 lỗ hổng |
-
-Bộ Playwright kiểm tra được những lỗi mà kiểm thử tầng HTTP không phát hiện
-được, ví dụ CSS có thực sự được áp dụng hay không, bố cục có tràn ngang trên
-mobile hay không, và hộp thoại xác nhận khi xóa có hiện ra hay không.
-
----
-
-## 10. Ảnh chụp màn hình
+## 9. Ảnh chụp màn hình
 
 ### Trang đăng nhập
 
@@ -404,7 +382,7 @@ toàn — không có ghi chú nào của tài khoản `20242507M`.
 
 ---
 
-## 11. Cấu trúc thư mục
+## 10. Cấu trúc thư mục
 
 ```
 src/
@@ -428,7 +406,7 @@ docs/                  tài liệu kiến trúc, tham chiếu endpoint, ảnh ch
 
 ---
 
-## 12. Giới hạn đã biết
+## 11. Giới hạn đã biết
 
 Nêu ra để minh bạch thay vì bỏ qua:
 
