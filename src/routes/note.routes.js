@@ -13,6 +13,9 @@ router.use(requireAuth);
 
 router.get("/", controller.index);
 
+// Đặt trước /:id để "chat" không bị hiểu nhầm là mã ghi chú.
+router.post("/chat", controller.chat);
+
 router.get("/new", controller.showCreateForm);
 router.post(
   "/",

@@ -1,0 +1,39 @@
+<% if (currentUser && chatEnabled) { %>
+  <!-- Khung hỏi đáp bằng ngôn ngữ tự nhiên. Chỉ hiện khi đã đăng nhập và
+       đã cấu hình API key. -->
+  <div id="chat-widget" data-csrf="<%= csrfToken %>">
+    <button type="button" id="chat-toggle" class="btn btn-primary rounded-pill shadow">
+      Hỏi về ghi chú
+    </button>
+
+    <div id="chat-panel" class="card shadow d-none">
+      <div class="card-header d-flex justify-content-between align-items-center py-2">
+        <strong class="small">Hỏi về ghi chú của bạn</strong>
+        <button type="button" id="chat-close" class="btn-close btn-sm" aria-label="Đóng"></button>
+      </div>
+
+      <div class="card-body">
+        <div id="chat-result" class="small mb-2"></div>
+
+        <div class="small text-secondary mb-2">
+          Ví dụ:
+          <% chatExamples.forEach(function (ex) { %>
+            <button type="button" class="btn btn-sm btn-link p-0 chat-example"><%= ex %></button><br />
+          <% }); %>
+        </div>
+
+        <form id="chat-form" class="d-flex gap-2">
+          <input
+            type="text"
+            id="chat-input"
+            class="form-control form-control-sm"
+            placeholder="Nhập câu hỏi…"
+            maxlength="300"
+            autocomplete="off"
+          />
+          <button type="submit" class="btn btn-sm btn-primary">Gửi</button>
+        </form>
+      </div>
+    </div>
+  </div>
+<% } %>

@@ -35,3 +35,24 @@ textarea:focus-visible {
   outline: 3px solid #0d6efd33;
   outline-offset: 2px;
 }
+
+/* Khung hỏi đáp nổi ở góc dưới bên phải. */
+#chat-widget {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 1040;
+}
+
+#chat-panel {
+  position: absolute;
+  right: 0;
+  bottom: 52px;
+  width: min(380px, calc(100vw - 32px));
+  max-height: min(70vh, 520px);
+  overflow-y: auto;
+}
+
+#chat-result table {
+  font-size: 0.8rem;
+}

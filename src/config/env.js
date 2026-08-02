@@ -31,6 +31,10 @@ module.exports = {
   demoEmail: process.env.DEMO_EMAIL || "20242507M",
   demoPassword: process.env.DEMO_PASSWORD || "12345678",
 
+  // Hỏi đáp bằng ngôn ngữ tự nhiên. Không có key thì tính năng tự tắt.
+  openaiApiKey: process.env.OPENAI_API_KEY || "",
+  openaiModel: process.env.OPENAI_MODEL || "gpt-5.6-luna",
+
   // Tài khoản thứ hai, tồn tại để minh họa mỗi người chỉ thấy dữ liệu của
   // chính mình: đăng nhập bằng tài khoản này sẽ không thấy ghi chú nào của
   // tài khoản trên, và mở URL ghi chú của nhau đều nhận 404.

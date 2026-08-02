@@ -1,6 +1,8 @@
 "use strict";
 
 const noteService = require("../services/note.service");
+const chatService = require("../services/chat.service");
+const env = require("../config/env");
 const { setFlash } = require("../middleware/locals");
 const { asyncHandler } = require("../utils/async-handler");
 const { notFound } = require("../utils/app-error");
@@ -91,9 +93,28 @@ const remove = (req, res) => {
   res.redirect("/notes");
 };
 
+/**
+ * Trả lời câu hỏi bằng ngôn ngữ tự nhiên. Trả JSON vì khung chat gọi bằng fetch
+ * chứ không nạp lại cả trang.
+ */
+const chat = asyncHandler(async (req, res) => {
+  if (!env.openaiApiKey) {
+    return res.status(503).json({ error: "Tính năng hỏi đáp chưa được bật." });
+  }
+
+  try {
+    // userId lấy từ phiên đăng nhập, câu hỏi không can thiệp được vào giá trị này.
+    const result = await chatService.ask(req.session.userId, req.body.question);
+    return res.json(result);
+  } catch (error) {
+    return res.status(400).json({ error: error.message });
+  }
+});
+
 module.exports = {
   parseId,
   index,
+  chat,
   showCreateForm,
   create,
   show,
