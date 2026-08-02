@@ -195,11 +195,6 @@ Các biến môi trường chính trong `.env`:
 | **422** | Dữ liệu form không hợp lệ |
 | **500** | Lỗi hệ thống, có ghi log ở server nhưng không lộ stack trace |
 
-**Hai mã cố ý không dùng.** Mã `400` không dùng vì mọi lỗi dữ liệu đầu vào đã quy
-về `422` và mã ghi chú sai định dạng quy về `404`, giữ một quy ước duy nhất cho
-dễ đoán. Mã `403` không dùng cho quyền sở hữu dữ liệu vì trả `403` sẽ vô tình xác
-nhận ghi chú đó tồn tại; trường hợp này quy về `404`.
-
 ---
 
 ## 8. Ghi chú kiểm thử phân quyền dữ liệu
