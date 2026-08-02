@@ -82,8 +82,7 @@ của người khác đều trả về 404 và dữ liệu không bị thay đ�
 - Đầy đủ trạng thái: danh sách rỗng, không có kết quả tìm kiếm, trang 404, trang
   500 thân thiện. Lỗi nhập liệu hiện ngay dưới từng ô và giữ lại dữ liệu đã gõ.
 - Chống XSS bằng cách escape toàn bộ nội dung người dùng khi hiển thị; chống SQL
-  injection bằng truy vấn tham số hóa và danh sách giá trị cho phép; mọi form
-  thay đổi dữ liệu đều mang CSRF token.
+  injection bằng truy vấn tham số hóa và danh sách giá trị cho phép.
 
 ---
 
@@ -179,7 +178,7 @@ Các biến môi trường chính trong `.env`:
 | **200** | Render trang thành công |
 | **302** | Sau POST thành công; chưa đăng nhập; người đã đăng nhập mở lại trang đăng nhập |
 | **401** | Sai email hoặc mật khẩu khi đăng nhập |
-| **403** | CSRF token thiếu hoặc không hợp lệ |
+| **403** | Yêu cầu thay đổi dữ liệu thiếu mã bảo vệ form |
 | **404** | Route không tồn tại; ghi chú không tồn tại hoặc không thuộc người dùng hiện tại; mã ghi chú sai định dạng |
 | **409** | Email đã được đăng ký |
 | **422** | Dữ liệu form không hợp lệ |
@@ -210,7 +209,22 @@ Với `UPDATE` và `DELETE`, nếu số dòng bị ảnh hưởng bằng 0 thì 
 vậy việc chống truy cập trái phép nằm ngay ở tầng dữ liệu, không phụ thuộc vào
 việc tầng trên có nhớ kiểm tra hay không.
 
-### 8.2. Kết quả kiểm chứng
+### 8.2. Giá trị `user_id` lấy từ đâu
+
+Đây là điểm quyết định tính an toàn của cơ chế trên. Khi đăng nhập thành công,
+server sinh một chuỗi ngẫu nhiên làm mã phiên, lưu vào bảng phiên đăng nhập kèm
+`user_id` của người vừa đăng nhập, rồi gửi **chỉ mã phiên đó** về trình duyệt
+dưới dạng cookie.
+
+Ở mỗi yêu cầu sau đó, server đọc mã phiên từ cookie, tra ngược trong bảng phiên
+để lấy ra `user_id`, và dùng đúng giá trị này cho câu truy vấn.
+
+Điều quan trọng: **trình duyệt không bao giờ giữ `user_id`**, chỉ giữ một chuỗi
+ngẫu nhiên vô nghĩa. Ánh xạ từ mã phiên sang `user_id` nằm hoàn toàn ở phía
+server. Vì vậy người dùng có sửa cookie hay thêm trường ẩn vào form cũng không
+thể tự nhận mình là người khác.
+
+### 8.3. Kết quả kiểm chứng
 
 Đo trực tiếp trên hệ thống đang chạy với hai tài khoản demo:
 
@@ -225,7 +239,7 @@ việc tầng trên có nhớ kiểm tra hay không.
 | Gửi kèm `user_id` của người khác trong form tạo ghi chú | Bị bỏ qua, ghi chú vẫn thuộc người đang đăng nhập |
 | Mã ghi chú sai định dạng (`abc`, `-1`, `0`) | `404` |
 
-### 8.3. Bằng chứng
+### 8.4. Bằng chứng
 
 Danh sách khi đăng nhập bằng `user_test` — 5 ghi chú, không có ghi chú nào của
 tài khoản `20242507M`:
