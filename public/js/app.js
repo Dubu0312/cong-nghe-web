@@ -27,7 +27,8 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 // ─── Trợ lý hỏi đáp về ghi chú ───────────────────────────────────────────────
-// Lịch sử hội thoại chỉ nằm trong biến này, mất khi tải lại trang.
+// Câu trả lời được đọc dần theo kiểu server-sent events và render markdown ngay
+// trong lúc chữ đang chạy. Lịch sử chỉ nằm trong biến, mất khi tải lại trang.
 document.addEventListener("DOMContentLoaded", function () {
   const widget = document.getElementById("chat-widget");
   if (!widget) return;
@@ -63,13 +64,26 @@ document.addEventListener("DOMContentLoaded", function () {
     return div.innerHTML;
   };
 
-  /** Thêm một bong bóng vào khung hội thoại. */
+  /*
+   * Escape trước rồi mới cho qua marked. Nhờ vậy cú pháp markdown vẫn hoạt động
+   * nhưng thẻ HTML thô trong câu trả lời chỉ hiện ra dưới dạng chữ, không chạy.
+   * Cách này thay cho việc phải cài thêm thư viện làm sạch HTML.
+   */
+  const renderMarkdown = function (text) {
+    const safe = escapeHtml(text);
+    return window.marked ? window.marked.parse(safe) : safe.replace(/\n/g, "<br />");
+  };
+
+  const scrollDown = function () {
+    log.scrollTop = log.scrollHeight;
+  };
+
   const bubble = function (who, html) {
     const row = document.createElement("div");
     row.className = "chat-row chat-" + who;
     row.innerHTML = '<div class="chat-bubble">' + html + "</div>";
     log.appendChild(row);
-    log.scrollTop = log.scrollHeight;
+    scrollDown();
     return row.firstChild;
   };
 
@@ -81,10 +95,27 @@ document.addEventListener("DOMContentLoaded", function () {
     input.value = "";
     input.disabled = true;
     sendButton.disabled = true;
-    widget.querySelector(".chat-suggestions")?.remove();
+    const suggestions = widget.querySelector(".chat-suggestions");
+    if (suggestions) suggestions.remove();
 
     bubble("me", escapeHtml(question));
     const answer = bubble("bot", "<span class='chat-typing'>đang soạn…</span>");
+
+    let text = "";
+    let sql = null;
+
+    /** Vẽ lại bong bóng với nội dung đã nhận được tới thời điểm này. */
+    const paint = function (streaming) {
+      let html = renderMarkdown(text);
+      if (streaming) html += '<span class="chat-caret"></span>';
+      if (!streaming && sql) {
+        html +=
+          '<details class="chat-sql"><summary>Câu truy vấn đã dùng</summary>' +
+          "<pre>" + escapeHtml(sql) + "</pre></details>";
+      }
+      answer.innerHTML = html;
+      scrollDown();
+    };
 
     try {
       const response = await fetch("/notes/chat", {
@@ -92,29 +123,48 @@ document.addEventListener("DOMContentLoaded", function () {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question, history, _csrf: widget.dataset.csrf }),
       });
-      const data = await response.json();
 
-      if (response.ok) {
-        // Giữ xuống dòng của câu trả lời, vẫn escape nội dung.
-        let html = escapeHtml(data.reply).replace(/\n/g, "<br />");
-        if (data.sql) {
-          html +=
-            '<details class="chat-sql"><summary>Câu truy vấn đã dùng</summary>' +
-            "<pre>" + escapeHtml(data.sql) + "</pre></details>";
-        }
-        answer.innerHTML = html;
-        history.push({ question: question, reply: data.reply });
-      } else {
-        answer.innerHTML = '<span class="text-danger">' +
-          escapeHtml(data.error || "Có lỗi xảy ra.") + "</span>";
+      if (!response.ok || !response.body) {
+        const fallback = await response.json().catch(function () {
+          return {};
+        });
+        throw new Error(fallback.error || "Không gọi được máy chủ.");
       }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      // Mỗi sự kiện là một dòng "data: {...}" ngăn nhau bằng dòng trống.
+      for (;;) {
+        const chunk = await reader.read();
+        if (chunk.done) break;
+
+        buffer += decoder.decode(chunk.value, { stream: true });
+        const events = buffer.split("\n\n");
+        buffer = events.pop() || "";
+
+        for (const raw of events) {
+          const line = raw.trim();
+          if (!line.startsWith("data:")) continue;
+
+          const event = JSON.parse(line.slice(5).trim());
+          if (event.type === "meta") sql = event.sql;
+          else if (event.type === "delta") { text += event.text; paint(true); }
+          else if (event.type === "error") throw new Error(event.message);
+        }
+      }
+
+      paint(false);
+      history.push({ question: question, reply: text });
     } catch (error) {
-      answer.innerHTML = '<span class="text-danger">Không gọi được máy chủ.</span>';
+      answer.innerHTML =
+        '<span class="text-danger">' + escapeHtml(error.message) + "</span>";
     } finally {
       input.disabled = false;
       sendButton.disabled = false;
       input.focus();
-      log.scrollTop = log.scrollHeight;
+      scrollDown();
     }
   });
 });

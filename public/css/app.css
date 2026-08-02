@@ -127,3 +127,34 @@ textarea:focus-visible {
   border-top: 1px solid #eee;
   padding-top: 8px;
 }
+
+/* Nội dung markdown trong bong bóng trả lời. */
+.chat-bubble > :last-child { margin-bottom: 0; }
+.chat-bubble p { margin: 0 0 6px; }
+.chat-bubble ul,
+.chat-bubble ol { margin: 4px 0 6px; padding-left: 20px; }
+.chat-bubble li { margin: 2px 0; }
+.chat-bubble code {
+  background: rgba(0, 0, 0, .07);
+  padding: 1px 4px;
+  border-radius: 4px;
+  font-size: .85em;
+}
+.chat-bubble pre code { background: none; padding: 0; }
+.chat-bubble h1,
+.chat-bubble h2,
+.chat-bubble h3 { font-size: 1rem; font-weight: 600; margin: 6px 0 4px; }
+
+/* Con trỏ nhấp nháy trong lúc chữ đang chạy. */
+.chat-caret {
+  display: inline-block;
+  width: 7px;
+  height: 1em;
+  margin-left: 2px;
+  background: currentColor;
+  opacity: .5;
+  vertical-align: -2px;
+  animation: chat-blink 1s steps(2, start) infinite;
+}
+
+@keyframes chat-blink { to { visibility: hidden; } }

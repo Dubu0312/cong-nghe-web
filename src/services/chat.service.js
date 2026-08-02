@@ -41,11 +41,19 @@ về type "chat" và giải thích ngắn gọn rằng bạn chỉ tra cứu đ�
 chính họ.
 `.trim();
 
+const CHAT_PROMPT = `
+Bạn là trợ lý của một ứng dụng ghi chú cá nhân, nói chuyện thân thiện bằng tiếng
+Việt, trả lời ngắn gọn. Bạn tra cứu được ghi chú của chính người đang đăng nhập:
+đếm, tìm theo từ khóa, lọc theo danh mục, xem ghi chú được ghim, tóm tắt nội
+dung. Bạn không sửa hay xóa ghi chú, và không xem được dữ liệu của người khác.
+Có thể dùng markdown đơn giản: in đậm và gạch đầu dòng.
+`.trim();
+
 const ANSWER_PROMPT = `
 Bạn là trợ lý của ứng dụng ghi chú. Dựa vào dữ liệu truy vấn được, trả lời câu
-hỏi của người dùng bằng một đoạn tiếng Việt ngắn gọn, tự nhiên, không nhắc tới
-SQL hay tên cột kỹ thuật. Nếu không có dữ liệu thì nói rõ là không tìm thấy.
-Khi liệt kê nhiều mục thì dùng gạch đầu dòng.
+hỏi của người dùng bằng tiếng Việt ngắn gọn, tự nhiên, không nhắc tới SQL hay
+tên cột kỹ thuật. Nếu không có dữ liệu thì nói rõ là không tìm thấy.
+Dùng markdown: gạch đầu dòng khi liệt kê, in đậm cho tiêu đề ghi chú và con số.
 `.trim();
 
 const FORBIDDEN =
@@ -69,6 +77,56 @@ function guardSql(sql) {
   if (!/\blimit\b/i.test(clean)) clean += " LIMIT 50";
 
   return clean;
+}
+
+/**
+ * Gọi mô hình ở chế độ streaming, gọi onDelta cho từng mẩu chữ nhận được.
+ * Trả về toàn bộ nội dung sau khi xong.
+ */
+async function streamModel(messages, onDelta) {
+  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${env.openaiApiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ model: env.openaiModel, messages, stream: true }),
+    signal: AbortSignal.timeout(60_000),
+  });
+
+  if (!res.ok) throw new Error(`Gọi mô hình thất bại (${res.status}).`);
+
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let full = "";
+
+  for await (const chunk of res.body) {
+    buffer += decoder.decode(chunk, { stream: true });
+
+    // Mỗi sự kiện của OpenAI là một dòng "data: {...}", ngăn nhau bằng dòng trống.
+    const lines = buffer.split("\n");
+    buffer = lines.pop() ?? "";
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed.startsWith("data:")) continue;
+
+      const payload = trimmed.slice(5).trim();
+      if (payload === "[DONE]") continue;
+
+      try {
+        const piece = JSON.parse(payload).choices?.[0]?.delta?.content;
+        if (piece) {
+          full += piece;
+          onDelta(piece);
+        }
+      } catch {
+        // Mẩu chưa đủ để parse thì bỏ qua, vòng sau sẽ có tiếp.
+      }
+    }
+  }
+
+  return full;
 }
 
 async function callModel(messages, { json = false } = {}) {
@@ -112,14 +170,21 @@ function buildHistoryMessages(history) {
  * @param {string} question
  * @param {Array}  history  các lượt trước, trình duyệt giữ và gửi kèm
  */
-async function ask(userId, question, history) {
+/**
+ * @param {number}   userId    lấy từ phiên đăng nhập, không bao giờ từ câu hỏi
+ * @param {string}   question
+ * @param {Array}    history   các lượt trước, trình duyệt giữ và gửi kèm
+ * @param {Function} onEvent   nhận {type:"meta"|"delta", ...} để đẩy dần về client
+ */
+async function ask(userId, question, history, onEvent = () => {}) {
   const trimmed = String(question ?? "").trim().slice(0, 300);
   if (!trimmed) throw new Error("Chưa nhập câu hỏi.");
   if (!env.openaiApiKey) throw new Error("Chưa cấu hình OPENAI_API_KEY.");
 
   const historyMessages = buildHistoryMessages(history);
 
-  // Bước 1: cần tra dữ liệu hay chỉ trò chuyện?
+  // Bước 1: cần tra dữ liệu hay chỉ trò chuyện? Bước này cần JSON trọn vẹn nên
+  // không stream được, nhưng phản hồi rất ngắn nên hầu như không thấy chờ.
   const raw = await callModel(
     [
       { role: "system", content: SYSTEM_PROMPT },
@@ -129,33 +194,44 @@ async function ask(userId, question, history) {
     { json: true }
   );
 
-  let decision;
+  let decision = {};
   try {
     decision = JSON.parse(raw);
   } catch {
-    // Mô hình trả về thứ không phải JSON thì coi như một câu trả lời thường.
-    return { reply: raw.trim() || "Xin lỗi, tôi chưa hiểu ý bạn." };
+    decision = { type: "chat", reply: raw.trim() };
   }
 
-  if (decision.type !== "query") {
-    return { reply: String(decision.reply || "Xin lỗi, tôi chưa hiểu ý bạn.") };
+  // Bước 2: nội dung trả lời luôn được stream, dù có tra dữ liệu hay không.
+  let messages;
+  let sql = null;
+
+  if (decision.type === "query") {
+    sql = guardSql(decision.sql);
+    const rows = db.prepare(sql).all({ userId }).slice(0, 50);
+    onEvent({ type: "meta", sql });
+
+    messages = [
+      { role: "system", content: ANSWER_PROMPT },
+      {
+        role: "user",
+        content:
+          `Câu hỏi: ${trimmed}\n\n` +
+          `Dữ liệu (JSON): ${JSON.stringify(rows).slice(0, 6000)}`,
+      },
+    ];
+  } else {
+    messages = [
+      { role: "system", content: CHAT_PROMPT },
+      ...historyMessages,
+      { role: "user", content: trimmed },
+    ];
   }
 
-  // Bước 2: chạy truy vấn rồi nhờ mô hình diễn đạt kết quả.
-  const sql = guardSql(decision.sql);
-  const rows = db.prepare(sql).all({ userId }).slice(0, 50);
+  const reply = await streamModel(messages, (piece) =>
+    onEvent({ type: "delta", text: piece })
+  );
 
-  const reply = await callModel([
-    { role: "system", content: ANSWER_PROMPT },
-    {
-      role: "user",
-      content:
-        `Câu hỏi: ${trimmed}\n\n` +
-        `Dữ liệu (JSON): ${JSON.stringify(rows).slice(0, 6000)}`,
-    },
-  ]);
-
-  return { reply: reply.trim(), sql, rowCount: rows.length };
+  return { reply: reply.trim(), sql };
 }
 
 const EXAMPLES = [

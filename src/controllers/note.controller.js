@@ -102,17 +102,30 @@ const chat = asyncHandler(async (req, res) => {
     return res.status(503).json({ error: "Tính năng hỏi đáp chưa được bật." });
   }
 
+  // Trả theo kiểu server-sent events để chữ hiện dần thay vì chờ trọn câu.
+  res.writeHead(200, {
+    "Content-Type": "text/event-stream; charset=utf-8",
+    "Cache-Control": "no-cache, no-transform",
+    Connection: "keep-alive",
+    "X-Accel-Buffering": "no", // tắt gom bộ đệm ở reverse proxy
+  });
+
+  const send = (event) => res.write(`data: ${JSON.stringify(event)}\n\n`);
+
   try {
     // userId lấy từ phiên đăng nhập, câu hỏi không can thiệp được vào giá trị này.
-    const result = await chatService.ask(
+    await chatService.ask(
       req.session.userId,
       req.body.question,
-      req.body.history
+      req.body.history,
+      send
     );
-    return res.json(result);
+    send({ type: "done" });
   } catch (error) {
-    return res.status(400).json({ error: error.message });
+    send({ type: "error", message: error.message });
   }
+
+  return res.end();
 });
 
 module.exports = {
