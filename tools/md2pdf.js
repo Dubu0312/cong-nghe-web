@@ -22,7 +22,7 @@ const body = marked.parse(fs.readFileSync(SRC, "utf8"));
 const html = `<!doctype html>
 <html lang="vi"><head><meta charset="utf-8">
 <style>
-  @page { size: A4; margin: 18mm 16mm; }
+  @page { size: A4; }
   body { font-family: "DejaVu Sans", "Noto Sans", system-ui, sans-serif;
          font-size: 10.5pt; line-height: 1.55; color: #1a1a1a; }
   h1 { font-size: 19pt; border-bottom: 2px solid #333; padding-bottom: 6px; }
@@ -48,6 +48,16 @@ const html = `<!doctype html>
   blockquote { border-left: 3px solid #999; margin: 10px 0; padding: 4px 12px;
                color: #444; background: #fafafa; }
   hr { border: none; border-top: 1px solid #ddd; margin: 18px 0; }
+
+  /* ── Trang bìa ─────────────────────────────────────────────────────────── */
+  .cover { text-align: center; break-after: page; padding-top: 12mm; }
+  .cover-uni { color: #b01116; font-weight: 700; font-size: 15pt;
+               letter-spacing: .3px; margin-bottom: 12mm; }
+  .cover-logo { width: 33mm; border: none; border-radius: 0;
+                margin: 0 auto 14mm auto; }
+  .cover-line { font-size: 12pt; margin: 7px 0; }
+  .cover-date { font-style: italic; margin-top: 62mm; }
+  .cover + h2 { margin-top: 0; }
   ul, ol { padding-left: 22px; }
   li { margin: 3px 0; }
 </style></head><body>${body}</body></html>`;
@@ -67,7 +77,22 @@ const html = `<!doctype html>
   });
   console.log(`  ảnh: ${loaded.ok}/${loaded.total} nạp được`);
 
-  await page.pdf({ path: OUT, format: "A4", printBackground: true });
+  await page.pdf({
+    path: OUT,
+    format: "A4",
+    printBackground: true,
+    displayHeaderFooter: true,
+    // Chromium bỏ qua CSS trong template, phải viết style nội tuyến.
+    headerTemplate:
+      '<div style="font-size:8pt;font-style:italic;width:100%;margin:0 16mm;' +
+      'border-bottom:.5pt solid #888;padding-bottom:2px;">' +
+      'Báo cáo đề tài môn học</div>',
+    footerTemplate:
+      '<div style="font-size:8pt;width:100%;margin:0 16mm;text-align:right;' +
+      'border-top:.5pt solid #888;padding-top:2px;">' +
+      '<span class="pageNumber"></span></div>',
+    margin: { top: "22mm", bottom: "18mm", left: "16mm", right: "16mm" },
+  });
   await browser.close();
   console.log(`  đã ghi ${OUT}`);
 })();

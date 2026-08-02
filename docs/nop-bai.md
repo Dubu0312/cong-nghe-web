@@ -1,15 +1,26 @@
-# BÁO CÁO BÀI THI CUỐI KỲ
-
 <!--
   Tệp nguồn của báo cáo nộp bài.
-  Xuất ra PDF với tên: [IT4409]_CuoiKy20252_20242507M_NguyenDucManh.pdf
+  Xuất ra PDF bằng: node tools/md2pdf.js
+  Kết quả: [IT4409]_CuoiKy20252_20242507M_NguyenDucManh.pdf
 -->
 
-**Môn học:** IT4409 – Công nghệ Web và dịch vụ trực tuyến (20252)
+<div class="cover">
 
-**Đề tài:** Chủ đề 2 — Quản lý ghi chú (Note App)
+<p class="cover-uni">ĐẠI HỌC BÁCH KHOA HÀ NỘI</p>
 
----
+<img class="cover-logo" src="assets/hust-logo.png" alt="Logo Đại học Bách khoa Hà Nội" />
+
+<p class="cover-line"><strong>Đề tài:</strong> Ứng dụng quản lý ghi chú cá nhân</p>
+
+<p class="cover-line"><strong>Học phần:</strong> Công nghệ Web và dịch vụ trực tuyến</p>
+
+<p class="cover-line"><strong>Giảng viên hướng dẫn:</strong> (điền tên giảng viên)</p>
+
+<p class="cover-line"><strong>Học viên thực hiện:</strong> Nguyễn Đức Mạnh — 20242507M</p>
+
+<p class="cover-date">Hà Nội, tháng 08 năm 2026</p>
+
+</div>
 
 ## 1. Thông tin học viên
 
