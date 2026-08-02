@@ -29,6 +29,9 @@ document.addEventListener("DOMContentLoaded", function () {
 // ─── Khung hỏi đáp về ghi chú ────────────────────────────────────────────────
 // Gửi câu hỏi lên server, server nhờ mô hình ngôn ngữ dựng câu truy vấn rồi
 // trả kết quả về dạng JSON. Toàn bộ phần sinh và chạy truy vấn nằm ở server.
+//
+// Lịch sử hội thoại chỉ nằm trong biến này, mất khi tải lại trang. Không lưu
+// vào server hay database — đủ để hỏi nối tiếp trong một phiên làm việc.
 document.addEventListener("DOMContentLoaded", function () {
   const widget = document.getElementById("chat-widget");
   if (!widget) return;
@@ -36,7 +39,10 @@ document.addEventListener("DOMContentLoaded", function () {
   const panel = document.getElementById("chat-panel");
   const form = document.getElementById("chat-form");
   const input = document.getElementById("chat-input");
-  const result = document.getElementById("chat-result");
+  const log = document.getElementById("chat-log");
+  const sendButton = form.querySelector("button[type=submit]");
+
+  const history = [];
 
   const open = function (isOpen) {
     panel.classList.toggle("d-none", !isOpen);
@@ -50,7 +56,6 @@ document.addEventListener("DOMContentLoaded", function () {
     open(false);
   });
 
-  // Bấm vào câu ví dụ thì điền sẵn rồi gửi luôn.
   widget.querySelectorAll(".chat-example").forEach(function (button) {
     button.addEventListener("click", function () {
       input.value = button.textContent.trim();
@@ -64,8 +69,18 @@ document.addEventListener("DOMContentLoaded", function () {
     return div.innerHTML;
   };
 
-  const renderTable = function (data) {
-    if (!data.rows.length) return "<p class='mb-0'>Không có kết quả nào.</p>";
+  /** Thêm một khối vào khung hội thoại và cuộn xuống cuối. */
+  const append = function (html) {
+    const item = document.createElement("div");
+    item.className = "chat-item";
+    item.innerHTML = html;
+    log.appendChild(item);
+    log.scrollTop = log.scrollHeight;
+    return item;
+  };
+
+  const renderAnswer = function (data) {
+    if (!data.rows.length) return "<div class='text-secondary'>Không có kết quả nào.</div>";
 
     const head = data.columns.map((c) => `<th>${escapeHtml(c)}</th>`).join("");
     const body = data.rows
@@ -78,9 +93,9 @@ document.addEventListener("DOMContentLoaded", function () {
       .join("");
 
     return (
-      `<div class="table-responsive"><table class="table table-sm table-bordered mb-2">` +
+      `<div class="table-responsive"><table class="table table-sm table-bordered mb-1">` +
       `<thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>` +
-      `<details><summary class="text-secondary">Câu truy vấn đã dùng</summary>` +
+      `<details><summary class="text-secondary small">Câu truy vấn đã dùng</summary>` +
       `<pre class="small mb-0">${escapeHtml(data.sql)}</pre></details>`
     );
   };
@@ -90,21 +105,38 @@ document.addEventListener("DOMContentLoaded", function () {
     const question = input.value.trim();
     if (!question) return;
 
-    result.innerHTML = "<span class='text-secondary'>Đang tìm…</span>";
+    input.value = "";
+    input.disabled = true;
+    sendButton.disabled = true;
+
+    append(`<div class="chat-question">${escapeHtml(question)}</div>`);
+    const answer = append("<div class='text-secondary'>Đang tìm…</div>");
 
     try {
       const response = await fetch("/notes/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question, _csrf: widget.dataset.csrf }),
+        body: JSON.stringify({
+          question,
+          history: history,
+          _csrf: widget.dataset.csrf,
+        }),
       });
       const data = await response.json();
 
-      result.innerHTML = response.ok
-        ? renderTable(data)
-        : `<p class="text-danger mb-0">${escapeHtml(data.error || "Có lỗi xảy ra.")}</p>`;
+      if (response.ok) {
+        answer.innerHTML = renderAnswer(data);
+        // Ghi lại lượt này để câu hỏi sau hiểu được ngữ cảnh.
+        history.push({ question: question, sql: data.sql });
+      } else {
+        answer.innerHTML = `<div class="text-danger">${escapeHtml(data.error || "Có lỗi xảy ra.")}</div>`;
+      }
     } catch (error) {
-      result.innerHTML = "<p class='text-danger mb-0'>Không gọi được máy chủ.</p>";
+      answer.innerHTML = "<div class='text-danger'>Không gọi được máy chủ.</div>";
+    } finally {
+      input.disabled = false;
+      sendButton.disabled = false;
+      input.focus();
     }
   });
 });

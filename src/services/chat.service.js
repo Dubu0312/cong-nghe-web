@@ -64,8 +64,27 @@ function guardSql(sql) {
   return clean;
 }
 
+// Số lượt hỏi cũ gửi kèm. Giữ ít để câu lệnh gửi đi không phình ra.
+const MAX_HISTORY_TURNS = 4;
+
+/**
+ * Chuyển lịch sử hội thoại do trình duyệt gửi lên thành messages.
+ * Chỉ nhận đúng hai trường và cắt bớt độ dài, vì đây vẫn là dữ liệu từ client.
+ */
+function buildHistoryMessages(history) {
+  if (!Array.isArray(history)) return [];
+
+  return history
+    .slice(-MAX_HISTORY_TURNS)
+    .flatMap((turn) => [
+      { role: "user", content: String(turn?.question ?? "").slice(0, 300) },
+      { role: "assistant", content: String(turn?.sql ?? "").slice(0, 500) },
+    ])
+    .filter((m) => m.content);
+}
+
 /** Gọi mô hình ngôn ngữ để sinh câu SQL. */
-async function generateSql(question) {
+async function generateSql(question, history) {
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -76,6 +95,8 @@ async function generateSql(question) {
       model: env.openaiModel,
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
+        // Lượt hỏi trước giúp hiểu câu nối tiếp kiểu "còn công việc thì sao".
+        ...buildHistoryMessages(history),
         { role: "user", content: question },
       ],
     }),
@@ -94,15 +115,17 @@ async function generateSql(question) {
 /**
  * Trả lời một câu hỏi của người dùng.
  *
- * @param {number} userId  lấy từ phiên đăng nhập, không bao giờ từ câu hỏi
+ * @param {number} userId   lấy từ phiên đăng nhập, không bao giờ từ câu hỏi
  * @param {string} question
+ * @param {Array}  history  các lượt hỏi trước, do trình duyệt giữ trong bộ nhớ
+ *                          và gửi kèm; server không lưu lại gì
  */
-async function ask(userId, question) {
+async function ask(userId, question, history) {
   const trimmed = String(question ?? "").trim().slice(0, 300);
   if (!trimmed) throw new Error("Chưa nhập câu hỏi.");
   if (!env.openaiApiKey) throw new Error("Chưa cấu hình OPENAI_API_KEY.");
 
-  const sql = guardSql(await generateSql(trimmed));
+  const sql = guardSql(await generateSql(trimmed, history));
 
   // Tham số userId do server truyền vào, câu lệnh chỉ được phép tham chiếu tên.
   const rows = db.prepare(sql).all({ userId });

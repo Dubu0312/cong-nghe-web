@@ -55,7 +55,13 @@ if (!env.isTest) {
 app.use(express.urlencoded({ extended: false, limit: "200kb" }));
 app.use(express.json({ limit: "200kb" }));
 
-app.use(express.static(path.join(__dirname, "..", "public"), { maxAge: "1d" }));
+// Chỉ cache tệp tĩnh ở production. Khi phát triển mà cache một ngày thì sửa
+// CSS hay JavaScript xong tải lại trang vẫn thấy bản cũ, rất khó lần ra.
+app.use(
+  express.static(path.join(__dirname, "..", "public"), {
+    maxAge: env.isProduction ? "1d" : 0,
+  })
+);
 
 app.use(sessionMiddleware);
 app.use(locals);

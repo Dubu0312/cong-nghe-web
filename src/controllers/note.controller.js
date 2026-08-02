@@ -104,7 +104,11 @@ const chat = asyncHandler(async (req, res) => {
 
   try {
     // userId lấy từ phiên đăng nhập, câu hỏi không can thiệp được vào giá trị này.
-    const result = await chatService.ask(req.session.userId, req.body.question);
+    const result = await chatService.ask(
+      req.session.userId,
+      req.body.question,
+      req.body.history
+    );
     return res.json(result);
   } catch (error) {
     return res.status(400).json({ error: error.message });
