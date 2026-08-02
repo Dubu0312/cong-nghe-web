@@ -14,7 +14,7 @@
 
 <p class="cover-line"><strong>Học phần:</strong> Công nghệ Web và dịch vụ trực tuyến</p>
 
-<p class="cover-line"><strong>Giảng viên hướng dẫn:</strong> (điền tên giảng viên)</p>
+<p class="cover-line"><strong>Giảng viên hướng dẫn:</strong> ThS. Nguyễn Mạnh Tuấn</p>
 
 <p class="cover-line"><strong>Học viên thực hiện:</strong> Nguyễn Đức Mạnh — 20242507M</p>
 
