@@ -1,23 +1,34 @@
 <% if (currentUser && chatEnabled) { %>
-  <!-- Khung hỏi đáp nổi. Chỉ hiện khi đã đăng nhập và đã cấu hình API key. -->
+  <!-- Trợ lý hỏi đáp. Chỉ hiện khi đã đăng nhập và đã cấu hình API key. -->
   <div id="chat-widget" data-csrf="<%= csrfToken %>">
-    <button type="button" id="chat-toggle" class="btn btn-primary rounded-pill shadow">
-      Hỏi về ghi chú
+    <button type="button" id="chat-toggle" class="btn btn-primary btn-lg rounded-pill shadow">
+      Trợ lý ghi chú
     </button>
 
-    <div id="chat-panel" class="card shadow d-none">
-      <div class="card-header d-flex justify-content-between align-items-center py-2">
-        <strong class="small">Hỏi về ghi chú của bạn</strong>
+    <div id="chat-panel" class="card shadow-lg d-none">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <div>
+          <strong>Trợ lý ghi chú</strong>
+          <div class="text-secondary" style="font-size: 0.75rem">
+            Hỏi bất cứ điều gì về ghi chú của bạn
+          </div>
+        </div>
         <button type="button" id="chat-close" class="btn-close" aria-label="Đóng"></button>
       </div>
 
-      <div class="card-body py-2">
-        <div id="chat-log" class="small"></div>
+      <div class="card-body">
+        <div id="chat-log">
+          <div class="chat-row chat-bot">
+            <div class="chat-bubble">
+              Chào bạn! Mình có thể tra cứu và tóm tắt ghi chú của bạn. Cứ hỏi
+              tự nhiên nhé.
+            </div>
+          </div>
+        </div>
 
-        <div class="small text-secondary mb-2">
-          Gợi ý:
+        <div class="chat-suggestions small text-secondary mb-2">
           <% chatExamples.forEach(function (ex) { %>
-            <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1 mb-1 chat-example">
+            <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2 mb-1 chat-example">
               <%= ex %>
             </button>
           <% }); %>
@@ -27,17 +38,13 @@
           <input
             type="text"
             id="chat-input"
-            class="form-control form-control-sm"
-            placeholder="Nhập câu hỏi…"
+            class="form-control"
+            placeholder="Nhắn cho trợ lý…"
             maxlength="300"
             autocomplete="off"
           />
-          <button type="submit" class="btn btn-sm btn-primary">Gửi</button>
+          <button type="submit" class="btn btn-primary">Gửi</button>
         </form>
-
-        <div class="form-text mt-1" style="font-size: 0.72rem">
-          Hỏi nối tiếp được. Tải lại trang là xóa hội thoại.
-        </div>
       </div>
     </div>
   </div>

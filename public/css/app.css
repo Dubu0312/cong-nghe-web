@@ -36,23 +36,94 @@ textarea:focus-visible {
   outline-offset: 2px;
 }
 
-/* Khung hỏi đáp nổi ở góc dưới bên phải. */
+/* ── Trợ lý hỏi đáp ───────────────────────────────────────────────────────── */
 #chat-widget {
   position: fixed;
-  right: 16px;
-  bottom: 16px;
+  right: 20px;
+  bottom: 20px;
   z-index: 1040;
 }
 
 #chat-panel {
   position: absolute;
   right: 0;
-  bottom: 52px;
-  width: min(380px, calc(100vw - 32px));
-  max-height: min(70vh, 520px);
-  overflow-y: auto;
+  bottom: 60px;
+  width: min(440px, calc(100vw - 32px));
+  height: min(620px, calc(100vh - 140px));
+  display: flex;
+  flex-direction: column;
+  border-radius: 14px;
+  overflow: hidden;
 }
 
-#chat-result table {
-  font-size: 0.8rem;
+#chat-panel .card-body {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+#chat-log {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 4px 2px 8px;
+}
+
+.chat-row {
+  display: flex;
+  margin-bottom: 10px;
+}
+
+.chat-me {
+  justify-content: flex-end;
+}
+
+.chat-bubble {
+  max-width: 82%;
+  padding: 8px 12px;
+  border-radius: 16px;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+.chat-me .chat-bubble {
+  background: #0d6efd;
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+
+.chat-bot .chat-bubble {
+  background: #f0f2f5;
+  color: #1a1a1a;
+  border-bottom-left-radius: 4px;
+}
+
+.chat-typing {
+  color: #6c757d;
+  font-style: italic;
+}
+
+.chat-sql {
+  margin-top: 6px;
+  font-size: 0.75rem;
+}
+
+.chat-sql summary {
+  cursor: pointer;
+  color: #6c757d;
+}
+
+.chat-sql pre {
+  margin: 4px 0 0;
+  padding: 6px 8px;
+  background: #fff;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  white-space: pre-wrap;
+  font-size: 0.72rem;
+}
+
+.chat-suggestions {
+  border-top: 1px solid #eee;
+  padding-top: 8px;
 }

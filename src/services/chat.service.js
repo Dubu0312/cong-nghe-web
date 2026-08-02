@@ -4,49 +4,56 @@ const db = require("../database/db");
 const env = require("../config/env");
 
 /*
- * Hỏi đáp bằng ngôn ngữ tự nhiên trên dữ liệu ghi chú.
+ * Trợ lý hỏi đáp về ghi chú.
  *
- * Cách làm: gửi câu hỏi kèm mô tả bảng cho mô hình ngôn ngữ, nhận lại một câu
- * SELECT, chạy câu đó rồi trả kết quả về.
+ * Cách chạy hai bước:
+ *   1. Hỏi mô hình xem câu này có cần tra dữ liệu không. Chào hỏi, cảm ơn hay
+ *      hỏi "bạn làm được gì" thì trả lời thẳng, không đụng tới database.
+ *   2. Nếu cần tra thì mô hình trả về một câu SELECT, chạy xong đưa kết quả
+ *      ngược lại cho mô hình diễn đạt thành câu tiếng Việt.
  *
- * Câu lệnh do mô hình sinh ra không được tin tuyệt đối nên trước khi chạy phải
- * đi qua vài kiểm tra ở hàm guardSql: chỉ cho SELECT, chỉ đụng bảng notes, và
- * bắt buộc kèm điều kiện user_id của người đang đăng nhập. Không có mấy dòng đó
- * thì bất kỳ ai cũng lấy được dữ liệu của người khác chỉ bằng cách hỏi khéo.
+ * Câu lệnh do mô hình sinh ra luôn đi qua guardSql trước khi chạy: chỉ SELECT,
+ * chỉ bảng notes, bắt buộc kèm :userId. Giá trị userId do server truyền vào từ
+ * phiên đăng nhập nên câu hỏi không can thiệp được.
  */
-
-const SCHEMA_HINT = `
-Bảng notes:
-  id          INTEGER
-  user_id     INTEGER  -- chủ sở hữu ghi chú
-  title       TEXT     -- tiêu đề
-  content     TEXT     -- nội dung
-  category    TEXT     -- một trong: personal, study, work, idea, other
-  is_pinned   INTEGER  -- 1 nếu được ghim
-  created_at  DATETIME
-  updated_at  DATETIME
-`.trim();
 
 const SYSTEM_PROMPT = `
-Bạn chuyển câu hỏi tiếng Việt thành MỘT câu lệnh SELECT của SQLite.
+Bạn là trợ lý của một ứng dụng ghi chú cá nhân, nói chuyện thân thiện bằng tiếng Việt.
 
-${SCHEMA_HINT}
+Luôn trả về JSON thuần, không bọc markdown, theo một trong hai dạng:
+- Cần tra dữ liệu ghi chú: {"type":"query","sql":"<một câu SELECT duy nhất>"}
+- Không cần tra dữ liệu (chào hỏi, cảm ơn, hỏi bạn là ai, hỏi làm được gì,
+  hoặc câu ngoài phạm vi ghi chú): {"type":"chat","reply":"<câu trả lời>"}
 
-Quy tắc bắt buộc:
-- Chỉ trả về câu SQL, không giải thích, không bọc trong dấu nháy hay markdown.
-- Chỉ dùng SELECT. Không INSERT, UPDATE, DELETE, DROP, ATTACH, PRAGMA.
-- Chỉ truy vấn bảng notes. Không đụng tới bảng users hay sessions.
-- Luôn có điều kiện: user_id = :userId
-- Luôn kèm LIMIT tối đa 50.
-- So sánh chuỗi thì dùng LIKE và bọc trong lower(...) cho không phân biệt hoa thường.
+Bảng duy nhất được phép truy vấn:
+  notes(id, user_id, title, content, category, is_pinned, created_at, updated_at)
+  category thuộc: personal (cá nhân), study (học tập), work (công việc),
+  idea (ý tưởng), other (khác). is_pinned = 1 nghĩa là được ghim.
+
+Quy tắc cho SQL:
+- Chỉ SELECT. Không sửa, xóa, tạo bảng. Không đụng bảng users hay sessions.
+- Bắt buộc có điều kiện user_id = :userId
+- Bắt buộc có LIMIT, tối đa 50.
+- So chuỗi thì dùng lower(...) LIKE cho không phân biệt hoa thường.
+
+Nếu người dùng yêu cầu xem dữ liệu của người khác hoặc yêu cầu sửa/xóa, hãy trả
+về type "chat" và giải thích ngắn gọn rằng bạn chỉ tra cứu được ghi chú của
+chính họ.
 `.trim();
 
-const FORBIDDEN = /\b(insert|update|delete|drop|alter|create|replace|attach|detach|pragma|vacuum|users|sessions)\b/i;
+const ANSWER_PROMPT = `
+Bạn là trợ lý của ứng dụng ghi chú. Dựa vào dữ liệu truy vấn được, trả lời câu
+hỏi của người dùng bằng một đoạn tiếng Việt ngắn gọn, tự nhiên, không nhắc tới
+SQL hay tên cột kỹ thuật. Nếu không có dữ liệu thì nói rõ là không tìm thấy.
+Khi liệt kê nhiều mục thì dùng gạch đầu dòng.
+`.trim();
 
-/**
- * Kiểm tra câu lệnh trước khi chạy. Ném lỗi nếu không đạt.
- * Trả về câu lệnh đã được dọn dẹp.
- */
+const FORBIDDEN =
+  /\b(insert|update|delete|drop|alter|create|replace|attach|detach|pragma|vacuum|users|sessions)\b/i;
+
+const MAX_HISTORY_TURNS = 5;
+
+/** Kiểm tra câu lệnh trước khi chạy, ném lỗi nếu không đạt. */
 function guardSql(sql) {
   let clean = String(sql || "")
     .replace(/```sql/gi, "")
@@ -64,27 +71,7 @@ function guardSql(sql) {
   return clean;
 }
 
-// Số lượt hỏi cũ gửi kèm. Giữ ít để câu lệnh gửi đi không phình ra.
-const MAX_HISTORY_TURNS = 4;
-
-/**
- * Chuyển lịch sử hội thoại do trình duyệt gửi lên thành messages.
- * Chỉ nhận đúng hai trường và cắt bớt độ dài, vì đây vẫn là dữ liệu từ client.
- */
-function buildHistoryMessages(history) {
-  if (!Array.isArray(history)) return [];
-
-  return history
-    .slice(-MAX_HISTORY_TURNS)
-    .flatMap((turn) => [
-      { role: "user", content: String(turn?.question ?? "").slice(0, 300) },
-      { role: "assistant", content: String(turn?.sql ?? "").slice(0, 500) },
-    ])
-    .filter((m) => m.content);
-}
-
-/** Gọi mô hình ngôn ngữ để sinh câu SQL. */
-async function generateSql(question, history) {
+async function callModel(messages, { json = false } = {}) {
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -93,55 +80,88 @@ async function generateSql(question, history) {
     },
     body: JSON.stringify({
       model: env.openaiModel,
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        // Lượt hỏi trước giúp hiểu câu nối tiếp kiểu "còn công việc thì sao".
-        ...buildHistoryMessages(history),
-        { role: "user", content: question },
-      ],
+      messages,
+      ...(json ? { response_format: { type: "json_object" } } : {}),
     }),
     signal: AbortSignal.timeout(30_000),
   });
 
   if (!res.ok) {
-    const detail = await res.text();
-    throw new Error(`Gọi mô hình thất bại (${res.status}): ${detail.slice(0, 200)}`);
+    throw new Error(`Gọi mô hình thất bại (${res.status}).`);
   }
 
   const data = await res.json();
   return data.choices?.[0]?.message?.content ?? "";
 }
 
+/** Lịch sử do trình duyệt gửi lên, chỉ lấy đúng hai trường và cắt bớt độ dài. */
+function buildHistoryMessages(history) {
+  if (!Array.isArray(history)) return [];
+
+  return history
+    .slice(-MAX_HISTORY_TURNS)
+    .flatMap((turn) => [
+      { role: "user", content: String(turn?.question ?? "").slice(0, 300) },
+      { role: "assistant", content: String(turn?.reply ?? "").slice(0, 400) },
+    ])
+    .filter((m) => m.content);
+}
+
 /**
- * Trả lời một câu hỏi của người dùng.
- *
  * @param {number} userId   lấy từ phiên đăng nhập, không bao giờ từ câu hỏi
  * @param {string} question
- * @param {Array}  history  các lượt hỏi trước, do trình duyệt giữ trong bộ nhớ
- *                          và gửi kèm; server không lưu lại gì
+ * @param {Array}  history  các lượt trước, trình duyệt giữ và gửi kèm
  */
 async function ask(userId, question, history) {
   const trimmed = String(question ?? "").trim().slice(0, 300);
   if (!trimmed) throw new Error("Chưa nhập câu hỏi.");
   if (!env.openaiApiKey) throw new Error("Chưa cấu hình OPENAI_API_KEY.");
 
-  const sql = guardSql(await generateSql(trimmed, history));
+  const historyMessages = buildHistoryMessages(history);
 
-  // Tham số userId do server truyền vào, câu lệnh chỉ được phép tham chiếu tên.
-  const rows = db.prepare(sql).all({ userId });
+  // Bước 1: cần tra dữ liệu hay chỉ trò chuyện?
+  const raw = await callModel(
+    [
+      { role: "system", content: SYSTEM_PROMPT },
+      ...historyMessages,
+      { role: "user", content: trimmed },
+    ],
+    { json: true }
+  );
 
-  return {
-    sql,
-    rows: rows.slice(0, 50),
-    columns: rows.length ? Object.keys(rows[0]) : [],
-  };
+  let decision;
+  try {
+    decision = JSON.parse(raw);
+  } catch {
+    // Mô hình trả về thứ không phải JSON thì coi như một câu trả lời thường.
+    return { reply: raw.trim() || "Xin lỗi, tôi chưa hiểu ý bạn." };
+  }
+
+  if (decision.type !== "query") {
+    return { reply: String(decision.reply || "Xin lỗi, tôi chưa hiểu ý bạn.") };
+  }
+
+  // Bước 2: chạy truy vấn rồi nhờ mô hình diễn đạt kết quả.
+  const sql = guardSql(decision.sql);
+  const rows = db.prepare(sql).all({ userId }).slice(0, 50);
+
+  const reply = await callModel([
+    { role: "system", content: ANSWER_PROMPT },
+    {
+      role: "user",
+      content:
+        `Câu hỏi: ${trimmed}\n\n` +
+        `Dữ liệu (JSON): ${JSON.stringify(rows).slice(0, 6000)}`,
+    },
+  ]);
+
+  return { reply: reply.trim(), sql, rowCount: rows.length };
 }
 
 const EXAMPLES = [
   "tôi có bao nhiêu ghi chú học tập",
-  "ghi chú nào được ghim",
-  "liệt kê tiêu đề ghi chú về cà phê",
-  "mỗi danh mục có mấy ghi chú",
+  "ghi chú nào đang được ghim",
+  "tóm tắt các ghi chú công việc",
 ];
 
 module.exports = { ask, guardSql, EXAMPLES };
