@@ -4,6 +4,7 @@ const { formatDateTime, excerpt } = require("../utils/format");
 const { CATEGORIES, CATEGORY_LABELS, SORT_OPTIONS } = require("../utils/constants");
 const { EXAMPLES } = require("../services/chat.service");
 const env = require("../config/env");
+const { assetUrl } = require("../utils/asset");
 
 /**
  * Gán sẵn những giá trị mà hầu hết view đều cần, để controller không phải
@@ -28,6 +29,7 @@ function locals(req, res, next) {
   res.locals.categoryLabels = CATEGORY_LABELS;
   res.locals.sortOptions = SORT_OPTIONS;
   res.locals.currentPath = req.path;
+  res.locals.asset = assetUrl;
 
   // Không có API key thì ẩn hẳn nút chat.
   res.locals.chatEnabled = Boolean(env.openaiApiKey);

@@ -6,8 +6,8 @@
     <title><%= typeof pageTitle !== "undefined" ? pageTitle + " · " : "" %>Ghi chú của tôi</title>
     <!-- Bootstrap tự host trong public/vendor: Helmet bật CSP default-src 'self'
          nên file tải từ CDN sẽ bị trình duyệt chặn. -->
-    <link rel="stylesheet" href="/vendor/bootstrap.min.css" />
-    <link rel="stylesheet" href="/css/app.css" />
+    <link rel="stylesheet" href="<%= asset('vendor/bootstrap.min.css') %>" />
+    <link rel="stylesheet" href="<%= asset('css/app.css') %>" />
   </head>
   <body class="d-flex flex-column min-vh-100 bg-body-tertiary">
     <%- include("navbar") %>
